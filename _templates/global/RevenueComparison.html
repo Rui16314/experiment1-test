@@ -1,0 +1,1 @@
+{% extends 'global/Layout.html' %}{% block content %}<h2>Revenue Comparison</h2><canvas id='revChart'></canvas><script>const labels={{labels_json|safe}},data={{data_json|safe}};new Chart(document.getElementById('revChart').getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'Average price',data}]},options:{responsive:true}});</script>{% endblock %}

@@ -1,0 +1,1 @@
+window.Chart=window.Chart||function(a,b){return{update(){}}};
