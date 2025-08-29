@@ -1,2 +1,5 @@
 otree>=5.10,<6.0
 otree[bots]
+
+otreechat
+channels-redis>=3.5
