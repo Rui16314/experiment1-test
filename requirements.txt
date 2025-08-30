@@ -1,2 +1,2 @@
-otree>=5.10,<6
-channels-redis>=4.1,<5
+otree==5.10.6
+channels-redis==4.1.0

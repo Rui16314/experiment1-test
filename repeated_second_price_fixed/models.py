@@ -1,3 +1,4 @@
+
 from otree.api import *
 
 class C(BaseConstants):
@@ -17,8 +18,7 @@ class Subsession(BaseSubsession):
             self.group_randomly()
         import random
         for p in self.get_players():
-            val = round(random.uniform(0, 100), 2)
-            p.valuation = cu(val)
+            p.valuation = cu(round(random.uniform(0, 100), 2))
 
 class Group(BaseGroup):
     def set_payoffs(self):
@@ -32,14 +32,11 @@ class Group(BaseGroup):
                 p.won = False
                 p.payoff = cu(0)
             return
-
         p1, p2 = players
         b1 = p1.field_maybe_none('bid') or cu(0)
         b2 = p2.field_maybe_none('bid') or cu(0)
-
         p1.opponent_bid = b2
         p2.opponent_bid = b1
-
         if b1 > b2:
             winner, loser = p1, p2
             winner_bid, loser_bid = b1, b2
@@ -53,7 +50,6 @@ class Group(BaseGroup):
             p1.payoff = max(cu(0), (p1.valuation - tie_price) / 2)
             p2.payoff = max(cu(0), (p2.valuation - tie_price) / 2)
             return
-
         winner.won = True
         loser.won = False
         price = winner_bid if 'second' == 'first' else loser_bid
