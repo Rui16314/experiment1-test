@@ -1,3 +1,3 @@
-web: daphne -b 0.0.0.0 -p $PORT otree.asgi:application
+web: python run_otree.py
 
 
