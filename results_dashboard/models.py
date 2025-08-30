@@ -1,12 +1,5 @@
 from otree.api import *
-
-class C(BaseConstants):
-    NAME_IN_URL = 'results_dashboard'
-    PLAYERS_PER_GROUP = None
-    NUM_ROUNDS = 1
-
+class C(BaseConstants): NAME_IN_URL='results_dashboard'
 class Subsession(BaseSubsession): pass
 class Group(BaseGroup): pass
-class Player(BasePlayer):
-    bin_size = models.IntegerField(initial=10, min=1, max=100)
-    target_v = models.IntegerField(initial=50, min=0, max=100)
+class Player(BasePlayer): pass

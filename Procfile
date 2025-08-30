@@ -1,3 +1,1 @@
-web: python run_otree.py
-
-
+web: otree prodserver 1

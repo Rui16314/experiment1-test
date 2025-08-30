@@ -1,12 +1,1 @@
-{% extends "otree/Page.html" %}
-{% block content %}
-<h3>Round {{ player.round_number }} Results</h3>
-<ul class="results">
-  <li>Your valuation: <b>{{ player.valuation }}</b></li>
-  <li>Your bid: <b>{{ player.bid }}</b></li>
-  <li>Opponent's bid: <b>{{ player.opponent_bid }}</b></li>
-  <li>Price paid: <b>{{ player.price_paid }}</b></li>
-  <li>Payoff this round: <b>{{ player.payoff }}</b></li>
-</ul>
-{% next_button %}
-{% endblock %}
+{% extends "otree/Page.html" %}{% block content %}<h3>Round {{ player.round_number }} Results</h3><ul><li>Valuation: {{ player.valuation }}</li><li>Your bid: {{ player.bid }}</li><li>Opponent bid: {{ player.opponent_bid }}</li><li>Price paid: {{ player.price_paid }}</li><li>Payoff: {{ player.payoff }}</li></ul>{% next_button %}{% endblock %}

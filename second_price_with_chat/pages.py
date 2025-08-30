@@ -1,10 +1,8 @@
-
 from otree.api import *
 from .models import C, Subsession, Group, Player
 import random
 
 def _ensure_valuation(player: Player):
-    # Safely ensure valuation exists without raising on None
     if player.field_maybe_none('valuation') is None:
         val = round(random.uniform(0, 100), 2)
         player.valuation = cu(val)
@@ -25,10 +23,8 @@ class Bid(Page):
         _ensure_valuation(self.player)
         return dict(valuation=self.player.field_maybe_none('valuation'))
 
-    # Be compatible with oTree builds that pass (or don't pass) timeout_happened
     def before_next_page(self, timeout_happened=False, **kwargs):
-        # Some versions set an attribute instead of passing the kwarg
-        timeout = timeout_happened or getattr(self, 'timeout_happened', False) or kwargs.get('timeout_happened', False)
+        timeout = (timeout_happened or getattr(self, 'timeout_happened', False) or kwargs.get('timeout_happened', False))
         if timeout and self.player.field_maybe_none('bid') is None:
             self.player.bid = cu(0)
 
@@ -37,4 +33,5 @@ class WaitForBids(WaitPage):
 
 class Results(Page):
     pass
+
 page_sequence = [Introduction, Chat, Bid, WaitForBids, Results]
