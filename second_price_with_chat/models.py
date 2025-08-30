@@ -1,97 +1,89 @@
 from otree.api import *
-import random
 
 class C(BaseConstants):
     NAME_IN_URL = 'second_price_with_chat'
     PLAYERS_PER_GROUP = 2
     NUM_ROUNDS = 10
     BID_SECONDS = 60
-    MAX_V = 10000
-    MIN_V = 0
 
-class Subsession(BaseSubsession): pass
+
+class Subsession(BaseSubsession):
+    def creating_session(self):
+        # Grouping
+        if True:
+            if self.round_number == 1:
+                self.group_randomly()
+            else:
+                self.group_like_round(1)
+        else:
+            # reshuffle every round
+            self.group_randomly()
+
+        # Assign valuations independently each round, uniform on [0,100] with 2 decimals
+        import random
+        for p in self.get_players():
+            val = round(random.uniform(0, 100), 2)
+            p.valuation = cu(val)
+
 
 class Group(BaseGroup):
-    price = models.CurrencyField(initial=0)
+    def set_payoffs(self):
+        # Two-player comparison
+        p1, p2 = self.get_players()
+
+        # Use 0 as default if a bid is missing due to timeout
+        b1 = p1.field_maybe_none('bid') or cu(0)
+        b2 = p2.field_maybe_none('bid') or cu(0)
+
+        # record opponent bids
+        p1.opponent_bid = b2
+        p2.opponent_bid = b1
+
+        # Determine winner/price/payoffs according to second-price rule (pays opponent's bid)
+        if b1 > b2:
+            # Player 1 wins
+            winner, loser = p1, p2
+            winner_bid, loser_bid = b1, b2
+        elif b2 > b1:
+            winner, loser = p2, p1
+            winner_bid, loser_bid = b2, b1
+        else:
+            # Tie: each gets expected payoff of 0.5*(valuation - price)
+            # Winner is not selected; both 'won' False, price 0 for display.
+            p1.won = False
+            p2.won = False
+            tie_price = b1  # equal
+            if 'second' == 'first':
+                p1.payoff = max(cu(0), (p1.valuation - tie_price) / 2)
+                p2.payoff = max(cu(0), (p2.valuation - tie_price) / 2)
+            else:
+                # second-price: price is opponent's bid (same in tie)
+                p1.payoff = max(cu(0), (p1.valuation - tie_price) / 2)
+                p2.payoff = max(cu(0), (p2.valuation - tie_price) / 2)
+            p1.price_paid = cu(0)
+            p2.price_paid = cu(0)
+            return
+
+        # Non-tie cases
+        winner.won = True
+        loser.won = False
+
+        if 'second' == 'first':
+            price = winner_bid
+        else:
+            price = loser_bid
+
+        winner.price_paid = price
+        loser.price_paid = cu(0)
+
+        # Payoffs cannot be negative
+        winner.payoff = max(cu(0), winner.valuation - price)
+        loser.payoff = cu(0)
+
 
 class Player(BasePlayer):
-    valuation = models.CurrencyField(doc='Your valuation (0.00–100.00)')
-    bid = models.CurrencyField(min=0, max=100)
-    opponent_bid = models.CurrencyField(initial=0)
-    opponent_valuation = models.CurrencyField(initial=0)
-    price_paid = models.CurrencyField(initial=0)
-    won = models.BooleanField(initial=False)
-
-def draw_valuation():
-    n = random.randint(C.MIN_V, C.MAX_V)
-    return cu(n) / 100
-
-def creating_session(subsession: Subsession):
-    if True:
-        if subsession.round_number == 1:
-            subsession.group_randomly()
-        else:
-            subsession.group_like_round(1)
-    else:
-        subsession.group_randomly()
-    for p in subsession.get_players():
-        p.valuation = draw_valuation()
-
-def set_bids_and_outcomes(group: Group, *, price_rule: str):
-    p1, p2 = group.get_players()
-    p1.opponent_bid = p2.bid
-    p2.opponent_bid = p1.bid
-    p1.opponent_valuation = p2.valuation
-    p2.opponent_valuation = p1.valuation
-
-    if p1.bid > p2.bid:
-        winner, loser = p1, p2
-        price = winner.bid if price_rule == 'second' else loser.bid
-        group.price = price
-        winner.won = True
-        winner.price_paid = price
-        loser.won = False
-        loser.price_paid = cu(0)
-        winner.payoff = winner.valuation - price
-        loser.payoff = cu(0)
-    elif p2.bid > p1.bid:
-        winner, loser = p2, p1
-        price = winner.bid if price_rule == 'second' else loser.bid
-        group.price = price
-        winner.won = True
-        winner.price_paid = price
-        loser.won = False
-        loser.price_paid = cu(0)
-        winner.payoff = winner.valuation - price
-        loser.payoff = cu(0)
-    else:
-        tie_price = p1.bid
-        group.price = tie_price
-        p1.price_paid = tie_price
-        p2.price_paid = tie_price
-        p1.payoff = (p1.valuation - tie_price) / 2
-        p2.payoff = (p2.valuation - tie_price) / 2
-
-    s = group.session
-    rev = s.vars.get('revenue', {})
-    lst = rev.get(C.NAME_IN_URL, [])
-    lst.append(float(group.price))
-    rev[C.NAME_IN_URL] = lst
-    s.vars['revenue'] = rev
-
-    obs = s.vars.get('observations', [])
-    for pl in group.get_players():
-        obs.append(dict(
-            app=C.NAME_IN_URL,
-            round=group.round_number,
-            participant=pl.participant.code,
-            valuation=float(pl.valuation),
-            bid=float(pl.bid),
-            opponent_bid=float(pl.opponent_bid),
-            price=float(group.price),
-            won=bool(pl.won),
-        ))
-    s.vars['observations'] = obs
-
-def set_payoffs(group: Group):
-    set_bids_and_outcomes(group, price_rule='second')
+    valuation = CurrencyField(initial=0)
+    bid = CurrencyField(min=0, initial=0)
+    opponent_bid = CurrencyField(initial=0)
+    price_paid = CurrencyField(initial=0)
+    won = BooleanField(initial=False)
