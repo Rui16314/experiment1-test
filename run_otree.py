@@ -1,12 +1,8 @@
 # run_otree.py
-import os, os, sys
+import os
 
-port = os.environ.get("PORT", "8000")
-
-# Run the real oTree CLI and REPLACE the current process,
-# so Heroku sees a long-running web process.
-cmd = ["otree", "prodserver", "1", f"0.0.0.0:{port}"]
-
-print("Starting:", " ".join(cmd), flush=True)
+print("Starting: otree prodserver", flush=True)
+# Let oTree read the Heroku $PORT internally; no extra args.
 os.execvp("otree", ["otree", "prodserver"])
+
 
