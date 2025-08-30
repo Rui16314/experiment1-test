@@ -5,15 +5,11 @@ import random
 
 def _ensure_valuation(player: Player):
     if player.valuation is None:
-        # fallback: draw a valuation uniformly in [0, 100] as currency
         player.valuation = cu(random.randint(0, 10000)) / 100
 
 class Introduction(Page):
     def vars_for_template(self):
         return dict(bid_seconds=C.BID_SECONDS)
-
-    def before_next_page(self):
-        _ensure_valuation(self.player)
 
 class Bid(Page):
     timeout_seconds = C.BID_SECONDS

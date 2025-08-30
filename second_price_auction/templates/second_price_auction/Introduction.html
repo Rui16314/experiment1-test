@@ -1,5 +1,7 @@
 {% extends "global/Layout.html" %}
 {% block content %}
 {% include "global/_GeneralInstructions.html" %}
-{% next_button %}
+<form method="post">{% csrf_token %}
+  {% next_button %}
+</form>
 {% endblock %}
