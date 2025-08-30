@@ -1,10 +1,19 @@
 
 from otree.api import *
 from .models import C, Subsession, Group, Player
+import random
+
+def _ensure_valuation(player: Player):
+    if player.valuation is None:
+        # fallback: draw a valuation uniformly in [0, 100] as currency
+        player.valuation = cu(random.randint(0, 10000)) / 100
 
 class Introduction(Page):
     def vars_for_template(self):
-        return dict(app_title="Session 6: Repeated Second-Price with Communication", bid_seconds=C.BID_SECONDS)
+        return dict(bid_seconds=C.BID_SECONDS)
+
+    def before_next_page(self):
+        _ensure_valuation(self.player)
 
 class Chat(Page):
     pass
@@ -15,6 +24,7 @@ class Bid(Page):
     form_fields = ['bid']
 
     def vars_for_template(self):
+        _ensure_valuation(self.player)
         return dict(valuation=self.player.valuation)
 
     def before_next_page(self, timeout_happened):

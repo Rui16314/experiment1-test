@@ -1,11 +1,12 @@
 {% extends "global/Layout.html" %}
 {% block content %}
-<h2>General Instructions</h2>
-<p>Read the on-screen instructions before each session. You will play 6 sessions, 10 rounds each (60 rounds total).</p>
+<h2>GENERAL INSTRUCTIONS</h2>
+<p>Welcome to the ECON 3310 Experiment Platform.</p>
 <ul>
-  <li>Valuations are independent and uniform on 0–100 (in cents).</li>
-  <li>You have {{ seconds_per_bid }} seconds to submit a bid each round.</li>
-  <li>Payoffs are in points. Make every round count.</li>
+  <li>The experiment has <b>2 parts</b>. Each part has <b>3 sessions</b>. Each session has <b>10 rounds</b> (total <b>60 rounds</b>).</li>
+  <li>Each round takes about <b>1 minute</b>. The whole experiment (including instruction review) should take ≤ <b>75 minutes</b>.</li>
+  <li>Participation earns you <b>100 points</b>.</li>
+  <li>You can earn extra points each round based on your choices and your opponent’s. Points accumulate over rounds and sessions.</li>
 </ul>
 {% next_button %}
 {% endblock %}
