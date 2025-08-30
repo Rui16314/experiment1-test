@@ -25,7 +25,7 @@ REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = True
 
 ADMIN_USERNAME = 'admin'
-ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD', 'pass')
+ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD')
 
 DEMO_PAGE_INTRO_HTML = "<h3>ECON 3310 Auction Experiment</h3>"
 SECRET_KEY = environ.get('OTREE_SECRET_KEY', 'dev-secret')
