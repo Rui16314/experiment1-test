@@ -45,7 +45,7 @@ ROOMS = [
     dict(
         name='econ3310',
         display_name='ECON 3310 Lab',
-        participant_label_file=None,
+        
     ),
 ]
 
