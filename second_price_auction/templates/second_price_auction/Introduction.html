@@ -1,7 +1,5 @@
 {% extends "global/Layout.html" %}
 {% block content %}
-{% include "global/Instructions.html" %}
-<h3>Session Instructions</h3>
-<p>You will receive a private valuation (0–100) each round and have <b>{{ bid_seconds }}</b> seconds to submit a sealed bid.</p>
+{% include "global/_GeneralInstructions.html" %}
 {% next_button %}
 {% endblock %}
