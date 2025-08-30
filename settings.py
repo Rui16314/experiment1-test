@@ -1,6 +1,5 @@
-
+# settings.py  (no imports from otree.* here)
 from os import environ
-from otree.api import Currency as cu
 
 SESSION_CONFIGS = [
     dict(name='first_price_auction', app_sequence=['first_price_auction'], num_demo_participants=2),
@@ -28,8 +27,10 @@ ADMIN_USERNAME = 'admin'
 ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD', 'pass')
 
 DEMO_PAGE_INTRO_HTML = "<h3>ECON 3310 Auction Experiment</h3>"
+
 SECRET_KEY = environ.get('OTREE_SECRET_KEY', 'dev-secret')
+AUTH_LEVEL = environ.get('OTREE_AUTH_LEVEL')  # e.g., STUDY, DEMO
 
 ROOMS = []
-
 INSTALLED_APPS = ['otree']
+
