@@ -3,10 +3,8 @@ from otree.api import *
 from .models import C, Subsession, Group, Player
 
 class Introduction(Page):
-    @staticmethod
-    def vars_for_template(player: Player):
+    def vars_for_template(self):
         return dict(bid_seconds=C.BID_SECONDS)
-
 
 class Chat(Page):
     pass
@@ -16,14 +14,12 @@ class Bid(Page):
     form_model = 'player'
     form_fields = ['bid']
 
-    @staticmethod
-    def vars_for_template(player: Player):
-        return dict(valuation=player.valuation)
+    def vars_for_template(self):
+        return dict(valuation=self.player.valuation)
 
-    @staticmethod
-    def before_next_page(player: Player, timeout_happened):
+    def before_next_page(self, timeout_happened):
         if timeout_happened:
-            player.bid = cu(0)
+            self.player.bid = cu(0)
 
 class WaitForBids(WaitPage):
     after_all_players_arrive = 'set_payoffs'
