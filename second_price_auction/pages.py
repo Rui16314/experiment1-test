@@ -4,7 +4,7 @@ from .models import C, Subsession, Group, Player
 
 class Introduction(Page):
     def vars_for_template(self):
-        return dict(bid_seconds=C.BID_SECONDS)
+        return dict(app_title="Session 4: Second-Price Sealed-Bid Auction", bid_seconds=C.BID_SECONDS)
 
 class Bid(Page):
     timeout_seconds = C.BID_SECONDS
