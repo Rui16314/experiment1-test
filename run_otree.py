@@ -8,5 +8,5 @@ port = os.environ.get("PORT", "8000")
 cmd = ["otree", "prodserver", "1", f"0.0.0.0:{port}"]
 
 print("Starting:", " ".join(cmd), flush=True)
-os.execvp("otree", ["otree", "prodserver", "1"])
+os.execvp("otree", ["otree", "prodserver"])
 
