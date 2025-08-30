@@ -1,0 +1,11 @@
+{% extends "global/Layout.html" %}
+{% block content %}
+<h2>General Instructions</h2>
+<p>Read the on-screen instructions before each session. You will play 6 sessions, 10 rounds each (60 rounds total).</p>
+<ul>
+  <li>Valuations are independent and uniform on 0–100 (in cents).</li>
+  <li>You have {{ seconds_per_bid }} seconds to submit a bid each round.</li>
+  <li>Payoffs are in points. Make every round count.</li>
+</ul>
+{% next_button %}
+{% endblock %}

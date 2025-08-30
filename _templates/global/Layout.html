@@ -1,1 +1,19 @@
-{% extends 'otree/Base.html' %}{% load static otree %}{% block global_styles %}<link rel='stylesheet' href='{% static 'global/style.css' %}'>{% endblock %}{% block scripts %}<script src='{% static 'global/chart.js' %}'></script>{% endblock %}{% block body %}<div class='container'><header class='site-header'><h1>{{ title|default:'ECON 3310 Auction Experiment' }}</h1></header><main>{% block content %}{% endblock %}</main></div>{% endblock %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% if title %}{{ title }}{% else %}ECON 3310 Auction Experiment{% endif %}</title>
+    <link rel="stylesheet" href="{{ static 'global/style.css' }}">
+  </head>
+  <body>
+    <div class="container">
+      <header class="site-header">
+        <h1>{% if title %}{{ title }}{% else %}ECON 3310 Auction Experiment{% endif %}</h1>
+      </header>
+      <main>
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </body>
+</html>

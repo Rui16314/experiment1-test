@@ -1,1 +1,12 @@
-{% extends 'global/Layout.html' %}{% block content %}<h2>Round Results</h2><table class='table'><tr><th>Your valuation</th><td>{{ player.valuation }}</td></tr><tr><th>Your bid</th><td>{{ player.bid }}</td></tr><tr><th>Opponent's valuation</th><td>{{ player.opponent_valuation }}</td></tr><tr><th>Opponent's bid</th><td>{{ player.opponent_bid }}</td></tr><tr><th>Price paid</th><td>{{ player.price_paid }}</td></tr><tr><th>Won?</th><td>{{ player.won|yesno:'Yes,No' }}</td></tr><tr><th>Points this round</th><td>{{ player.payoff }}</td></tr></table>{% next_button %}{% endblock %}
+{% extends "global/Layout.html" %}
+{% block content %}
+  <h3>Round {{ player.round_number }} Results</h3>
+  <ul class="results">
+    <li>Your valuation: <b>{{ player.valuation }}</b></li>
+    <li>Your bid: <b>{{ player.bid }}</b></li>
+    <li>Opponent's bid: <b>{{ player.opponent_bid }}</b></li>
+    <li>Price paid: <b>{{ player.price_paid }}</b></li>
+    <li>Payoff this round: <b>{{ player.payoff }}</b></li>
+  </ul>
+  {% next_button %}
+{% endblock %}

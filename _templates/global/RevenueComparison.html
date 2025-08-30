@@ -1,1 +1,13 @@
-{% extends 'global/Layout.html' %}{% block content %}<h2>Revenue Comparison</h2><canvas id='revChart'></canvas><script>const labels={{labels_json|safe}},data={{data_json|safe}};new Chart(document.getElementById('revChart').getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'Average price',data}]},options:{responsive:true}});</script>{% endblock %}
+{% extends "global/Layout.html" %}
+{% block content %}
+  <h2>Revenue Comparison</h2>
+  <p>This chart summarizes price (revenue) by session.</p>
+  <canvas id="revChart"></canvas>
+  <script src="{{ static 'global/chart.js' }}"></script>
+  <script>
+    (function(){
+      var data = {{ revenue_data_json }};  // provide from vars_for_template
+      window.renderRevenueChart('revChart', data);
+    })();
+  </script>
+{% endblock %}

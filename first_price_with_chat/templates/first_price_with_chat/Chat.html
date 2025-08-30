@@ -1,8 +1,7 @@
 {% extends "global/Layout.html" %}
-{% load otreechat %}
 {% block content %}
-<h3>Chat with your opponent</h3>
-<p class="chat-note">Discuss any auction-related matter, but keep your identity confidential.</p>
-{% chat %}
-{% next_button %}
+  <h3>Chat with your opponent</h3>
+  <p class="chat-note">Discuss any auction-related matter, but keep your identity confidential.</p>
+  {% chat %}
+  {% next_button %}
 {% endblock %}
