@@ -1,0 +1,8 @@
+{% extends "global/Layout.html" %}
+{% block content %}
+<h3>Your valuation: <b>{{ valuation }}</b></h3>
+<form method="post">{% csrf_token %}
+  {{ formfields }}
+  {% next_button %}
+</form>
+{% endblock %}

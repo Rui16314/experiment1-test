@@ -1,0 +1,13 @@
+{% extends "global/Layout.html" %}
+{% block content %}
+<h2>{{ view.app_name|title }}</h2>
+<div class="notice">
+  <p>Each round you receive a private valuation (uniformly from 0.00–100.00). You then have <b>{{ bid_seconds }}</b> seconds to submit a sealed bid.</p>
+  <ul>
+    <li>First-price sessions: winner pays <em>own</em> bid.</li>
+    <li>Second-price sessions: winner pays the <em>opponent’s</em> bid.</li>
+    <li>Ties: expected payoff is 0.5 × (valuation − price).</li>
+  </ul>
+</div>
+{% next_button %}
+{% endblock %}
