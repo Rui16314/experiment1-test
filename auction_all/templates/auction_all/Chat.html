@@ -24,13 +24,10 @@
       p.textContent=(e.p==={{ player.id_in_group }}?'You: ':'Opponent: ')+e.text;
       box.appendChild(p); box.scrollTop=box.scrollHeight;
     }
-    // oTree classic callback
     function liveRecv(data){ if(data && data.msg) renderLine(data.msg); }
-    // oTree event-style callback
     document.addEventListener('otreeLiveRecv', function(ev){
       if(ev.detail && ev.detail.msg) renderLine(ev.detail.msg);
     });
-    // prevent form submission; send via websockets
     const msg=document.getElementById('msg');
     const sendBtn=document.getElementById('sendBtn');
     function doSend(){

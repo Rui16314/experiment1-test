@@ -1,1 +1,94 @@
-{% extends 'auction_all/Base.html' %}{% block content %}<h2>All Sessions Dashboard (5–8)</h2><canvas id='bar'></canvas>{% endblock %}{% block scripts %}<script src='https://cdn.jsdelivr.net/npm/chart.js'></script><script>new Chart(document.getElementById('bar'),{type:'bar',data:{labels:[1,2],datasets:[{data:[1,2]}]}})</script>{% endblock %}
+{% extends 'auction_all/Base.html' %}
+{% block content %}
+<h2>All Sessions Dashboard (5–8)</h2>
+<p class="text-muted">Aggregated across all six sessions.</p>
+
+<script type="application/json" id="series1_json">{{ series1|safe }}</script>
+<script type="application/json" id="series3_json">{{ series3|safe }}</script>
+<script type="application/json" id="bar_json">{{ bar_overall|safe }}</script>
+<script type="application/json" id="pooled_json">{{ pooled_points|safe }}</script>
+<script type="application/json" id="pie_json">{{ pie|safe }}</script>
+
+<h4 class="mt-4">5) Average bid vs valuation</h4>
+<div class="row" id="s1_rows"></div>
+
+<h4 class="mt-4">6) Average revenue by round</h4>
+<div class="row" id="s3_rows"></div>
+
+<h4 class="mt-4">7) Overall average revenue comparison</h4>
+<canvas id="bar_overall"></canvas>
+
+<h4 class="mt-4">8) Bonus summaries</h4>
+<div class="row">
+  <div class="col-md-6">
+    <h6>Bid vs Valuation (pooled scatter)</h6>
+    <canvas id="scatter"></canvas>
+  </div>
+  <div class="col-md-6">
+    <h6>Share: over / under / equal bids</h6>
+    <canvas id="pie"></canvas>
+  </div>
+</div>
+
+<form method="post" class="mt-4"><button class="btn btn-primary">Finish</button></form>
+{% endblock %}
+
+{% block scripts %}
+  {{ super }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    function J(id){ try{ return JSON.parse(document.getElementById(id).textContent||'{}'); }catch(e){ return {}; } }
+    const series1 = J('series1_json');
+    const series3 = J('series3_json');
+    const bar = J('bar_json');
+    const pooled = J('pooled_json');
+    const pie = J('pie_json');
+
+    function addLineRow(containerId, label, id){
+      const row=document.getElementById(containerId);
+      const col=document.createElement('div'); col.className='col-md-6';
+      col.innerHTML='<div class="chart-box"><h6>'+label+'</h6><canvas id="'+id+'"></canvas></div>';
+      row.appendChild(col);
+    }
+    function drawLine(id,label,data,xTitle,yTitle){
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (data && data.length){
+        new Chart(el, { type:'line',
+          data:{datasets:[{label, data, parsing:false, pointRadius:2, tension:0}]},
+          options:{maintainAspectRatio:false, scales:{x:{type:'linear', title:{display:true,text:xTitle}}, y:{title:{display:true,text:yTitle}}}}
+        });
+      } else {
+        el.insertAdjacentHTML('afterend','<div class="text-muted small">No data</div>');
+      }
+    }
+
+    let i=1;
+    Object.keys(series1).forEach(lbl=>{ const id='s1_'+(i++); addLineRow('s1_rows', lbl, id); drawLine(id,lbl,series1[lbl],'Valuation','Avg bid'); });
+    i=1;
+    Object.keys(series3).forEach(lbl=>{ const id='s3_'+(i++); addLineRow('s3_rows', lbl, id); drawLine(id,lbl,series3[lbl],'Round','Avg revenue'); });
+
+    if (Array.isArray(bar) && bar.length){
+      new Chart(document.getElementById('bar_overall'),{
+        type:'bar',
+        data:{labels:bar.map(x=>x.label), datasets:[{label:'Overall avg revenue', data:bar.map(x=>x.value)}]},
+        options:{scales:{y:{title:{display:true,text:'Revenue'}}}}
+      });
+    }
+
+    if (Array.isArray(pooled) && pooled.length){
+      new Chart(document.getElementById('scatter'),{
+        type:'scatter',
+        data:{datasets:[{label:'Bids vs Valuations', data:pooled, parsing:false}]},
+        options:{maintainAspectRatio:false, scales:{x:{type:'linear', title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Bid'}}}}
+      });
+    }
+
+    if (Array.isArray(pie) && pie.length){
+      new Chart(document.getElementById('pie'),{
+        type:'pie',
+        data:{labels:pie.map(p=>p.label), datasets:[{data:pie.map(p=>p.value)}]}
+      });
+    }
+  </script>
+{% endblock %}
