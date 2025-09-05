@@ -2,9 +2,9 @@
 {% extends 'auction_all/Base.html' %}
 {% block content %}
 <h2>All Sessions Dashboard (5–8)</h2>
-<p class="text-muted">Aggregated across the six sessions you just played.</p>
+<p class="text-muted">Aggregated across all six sessions.</p>
 
-<h4 class="mt-4">5) Average bid vs valuation (six sessions, side-by-side)</h4>
+<h4 class="mt-4">5) Average bid vs valuation</h4>
 <div class="row">
   {% for lbl in labels %}
   <div class="col-md-6">
@@ -16,7 +16,7 @@
   {% endfor %}
 </div>
 
-<h4 class="mt-4">6) Average revenue by round (six sessions, side-by-side)</h4>
+<h4 class="mt-4">6) Average revenue by round</h4>
 <div class="row">
   {% for lbl in labels %}
   <div class="col-md-6">
@@ -43,9 +43,7 @@
   </div>
 </div>
 
-<form method="post" class="mt-4">
-  <button class="btn btn-primary">Finish</button>
-</form>
+<form method="post" class="mt-4"><button class="btn btn-primary">Finish</button></form>
 
 <script>
 const series1 = {{ series1|safe }};
@@ -54,34 +52,13 @@ const bar = {{ bar_overall|safe }};
 const pooled = {{ pooled_points|safe }};
 const pie = {{ pie|safe }};
 
-function drawLine(id, label, data, xTitle, yTitle){
-  new Chart(document.getElementById(id), {
-    type: 'line',
-    data: { datasets: [{ label, data }] },
-    options: { parsing: false, scales: { x: { title: {display:true, text:xTitle}}, y: { title: {display:true, text:yTitle}} } }
-  });
-}
+function drawLine(id,label,data,xTitle,yTitle){new Chart(document.getElementById(id),{type:'line',data:{datasets:[{label,data}]},options:{parsing:false,scales:{x:{title:{display:true,text:xTitle}},y:{title:{display:true,text:yTitle}}}}});}
 
-let i = 1;
-Object.keys(series1).forEach(lbl => drawLine('s1_' + (i++), lbl, series1[lbl], 'Valuation', 'Avg bid'));
-i = 1;
-Object.keys(series3).forEach(lbl => drawLine('s3_' + (i++), lbl, series3[lbl], 'Round', 'Avg revenue'));
+let i=1; Object.keys(series1).forEach(lbl=>drawLine('s1_'+(i++), lbl, series1[lbl], 'Valuation', 'Avg bid'));
+i=1; Object.keys(series3).forEach(lbl=>drawLine('s3_'+(i++), lbl, series3[lbl], 'Round', 'Avg revenue'));
 
-new Chart(document.getElementById('bar_overall'), {
-  type: 'bar',
-  data: { labels: bar.map(x=>x.label), datasets: [{ label: 'Overall avg revenue', data: bar.map(x=>x.value) }] },
-  options: { scales: { y: { title: {display:true, text:'Revenue'} } } }
-});
-
-new Chart(document.getElementById('scatter'), {
-  type: 'scatter',
-  data: { datasets: [{ label: 'Bids vs Valuations', data: pooled }] },
-  options: { scales: { x: { title: {display:true, text:'Valuation'} }, y: { title: {display:true, text:'Bid'} } } }
-});
-
-new Chart(document.getElementById('pie'), {
-  type: 'pie',
-  data: { labels: pie.map(p=>p.label), datasets: [{ data: pie.map(p=>p.value) }] },
-});
+new Chart(document.getElementById('bar_overall'),{type:'bar',data:{labels:bar.map(x=>x.label),datasets:[{label:'Overall avg revenue',data:bar.map(x=>x.value)}]},options:{scales:{y:{title:{display:true,text:'Revenue'}}}}});
+new Chart(document.getElementById('scatter'),{type:'scatter',data:{datasets:[{label:'Bids vs Valuations',data:pooled}]} ,options:{scales:{x:{title:{display:true,text:'Valuation'}},y:{title:{display:true,text:'Bid'}}}}});
+new Chart(document.getElementById('pie'),{type:'pie',data:{labels:pie.map(p=>p.label),datasets:[{data:pie.map(p=>p.value)}]}});
 </script>
 {% endblock %}

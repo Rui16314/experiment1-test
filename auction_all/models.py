@@ -19,8 +19,6 @@ class C(BaseConstants):
     PLAYERS_PER_GROUP = 2
     NUM_ROUNDS = TOTAL_ROUNDS
 
-class SubsubsessionBase(BaseSubsession): pass
-
 class Subsession(BaseSubsession):
     auction_format = models.StringField()
     partner = models.StringField()
@@ -70,18 +68,16 @@ class Group(BaseGroup):
             winner, loser = _r.choice([(p1,p2),(p2,p1)])
             price = b1 if self.subsession.auction_format == "first" else b2
 
-        auto_highest = False
-        try:
-            b1_raw = p1.bid
-        except TypeError:
-            b1_raw = None
-        try:
-            b2_raw = p2.bid
-        except TypeError:
-            b2_raw = None
+        # highest bid came from an auto/default bid -> both zero
+        def raw_bid(pl):
+            try:
+                return pl.bid
+            except TypeError:
+                return None
 
-        if (((b1_raw is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or \
-           (((b2_raw is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
+        auto_highest = False
+        if (((raw_bid(p1) is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or \
+           (((raw_bid(p2) is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
             auto_highest = True
 
         if auto_highest:
@@ -105,15 +101,13 @@ class Player(BasePlayer):
     timed_out = models.BooleanField(initial=False)
 
     def get_effective_bid(self):
-        # Safely read bid (oTree raises TypeError if it's None on access)
+        # oTree raises TypeError if None; guard it
         try:
             b = self.bid
         except TypeError:
             b = None
-
         if b is not None:
             return Decimal(b)
-
         v = Decimal(self.valuation or 0)
         if self.subsession.auction_format == "first":
             return (v/2).quantize(Decimal("0.01"))

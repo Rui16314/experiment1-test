@@ -4,8 +4,6 @@ from .models import C, Subsession, Group, Player, PHASES, PHASE_SIZE, TOTAL_ROUN
 import json
 from collections import defaultdict
 
-# ==== INSTRUCTIONS (with highlights where specified) ====
-
 GENERAL_INSTR = """Welcome to the ECON 3310 Experiment Platform.
 
 This experiment has two parts. Each part includes three separate sessions. In each session, you'll complete 10 rounds. Therefore, you will play an auction game over 6 sessions, totaling 60 rounds. Each round is expected to take about 1 minute or less. Overall, the experiment should take no more than 75 minutes, including review of instructions.
@@ -19,38 +17,27 @@ The instructions for each session will appear on the computer screen before you 
 
 SESSION_1 = """<strong>SESSION 1: FIRST-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
 
-You will play 10 rounds of this game. At the start of each round, you'll be <strong>randomly paired</strong> with a different participant.
-
-The seller is auctioning an indivisible item, and two buyers—yourself and your opponent—are interested in purchasing it. In each round, you'll participate in an auction to buy the good.
-
-Valuations are independently and uniformly chosen from 0 to 100 (cents allowed). You will know <strong>your</strong> valuation, not your opponent’s.
-
-After learning your valuation, you have <strong>1 minute</strong> to place your bid. After both bids are submitted or the timer ends, you will see who won, the winning price, and your points.
+You will be <strong>randomly paired</strong> with a new opponent each round.
 """
-
 SESSION_2 = """<strong>SESSION 2: REPEATED FIRST-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
 
-You will play 10 rounds of the same game as Session 1. The only difference is: you will play <strong>all 10 rounds against the same opponent</strong> (fixed pairing).
+You will play against the <strong>same opponent</strong> for all 10 rounds.
 """
-
 SESSION_3 = """<strong>SESSION 3: REPEATED FIRST-PRICE SEALED BID AUCTION WITH COMMUNICATION INSTRUCTIONS</strong>
 
-Same as Session 2, but you may <strong>communicate via chat</strong> with your opponent before submitting your bid. Keep your identity confidential.
+Same as Session 2, but with <strong>chat enabled</strong> before bidding.
 """
-
 SESSION_4 = """<strong>SESSION 4: SECOND-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
 
-You will again be <strong>randomly paired</strong> each round. In a second-price auction, the highest bidder wins but pays the <strong>second-highest</strong> bid.
+Random pairing each round; winner pays the <strong>second-highest</strong> bid.
 """
-
 SESSION_5 = """<strong>SESSION 5: REPEATED SECOND-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
 
-Same as Session 4, but with a <strong>fixed opponent</strong> across all 10 rounds.
+Same as Session 4, but with a <strong>fixed opponent</strong> across all rounds.
 """
-
 SESSION_6 = """<strong>SESSION 6: REPEATED SECOND-PRICE SEALED BID AUCTION WITH COMMUNICATION INSTRUCTIONS</strong>
 
-Same as Session 5, but with <strong>chat enabled</strong> before bidding.
+Fixed opponent + <strong>chat</strong> before bidding.
 """
 
 PHASE_INSTR = {
@@ -65,9 +52,7 @@ PHASE_INSTR = {
 def current_phase(subsession): return PHASES[subsession.phase_index]
 
 class PhaseIntro(Page):
-    def is_displayed(self):
-        return (self.player.round_number - 1) % PHASE_SIZE == 0
-
+    def is_displayed(self): return (self.player.round_number - 1) % PHASE_SIZE == 0
     def vars_for_template(self):
         subsess = self.player.subsession
         phase = current_phase(subsess)
@@ -123,13 +108,10 @@ class SessionSummary(Page):
                         bid=float(p.bid or 0),
                         price=float(p.winning_price or 0),
                     ))
-
-        # 1) Avg bid vs valuation (group)
         bins = defaultdict(list)
         for rr in rows: bins[int(rr["valuation"])].append(rr["bid"])
         s1 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(bins.items()) if v]
 
-        # 2) Individual avg bid vs valuation (per student)
         indiv = {}
         for rr in rows:
             pid = rr["pid"]
@@ -140,16 +122,13 @@ class SessionSummary(Page):
             pts = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(mp.items())]
             indiv_series.append(dict(pid=pid, points=pts))
 
-        # 3) Avg revenue by round (group)
         rev = defaultdict(list)
         for rr in rows: rev[rr["round"] - (start-1)].append(rr["price"])
         s3 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(rev.items()) if v]
 
-        # 4) Individual overall avg revenue (this participant)
         my_pid = self.player.participant.code
         my_prices = [rr["price"] for rr in rows if rr["pid"] == my_pid]
-        my_overall = (sum(my_prices)/len(my_prices)) if my_prices else 0.0
-        overall_rev_str = f"{my_overall:.2f}"
+        overall_rev_str = f"{(sum(my_prices)/len(my_prices) if my_prices else 0):.2f}"
 
         return dict(
             avg_bid_by_val=json.dumps(s1),
