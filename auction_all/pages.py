@@ -59,7 +59,7 @@ class Chat(Page):
         txt = (data or {}).get("text","").strip()
         if not txt: return
         entry = {"p": player.id_in_group, "text": txt}
-        return {0: dict(msg=entry)}
+        return {0: dict(msg=entry), player.id_in_group: dict(msg=entry)}
     def vars_for_template(self):
         return dict(my_valuation=self.player.valuation)
 
