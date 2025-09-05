@@ -19,6 +19,8 @@ class C(BaseConstants):
     PLAYERS_PER_GROUP = 2
     NUM_ROUNDS = TOTAL_ROUNDS
 
+class SubsubsessionBase(BaseSubsession): pass
+
 class Subsession(BaseSubsession):
     auction_format = models.StringField()
     partner = models.StringField()
@@ -53,7 +55,7 @@ class Subsession(BaseSubsession):
 class Group(BaseGroup):
     def set_winner_and_payoffs(self):
         p1, p2 = self.get_players()
-        # get bids; if missing, compute default implied by format
+
         b1 = p1.get_effective_bid()
         b2 = p2.get_effective_bid()
 
@@ -68,9 +70,18 @@ class Group(BaseGroup):
             winner, loser = _r.choice([(p1,p2),(p2,p1)])
             price = b1 if self.subsession.auction_format == "first" else b2
 
-        # If a default/timeout bid is the highest → both zero
         auto_highest = False
-        if (((p1.bid is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or            (((p2.bid is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
+        try:
+            b1_raw = p1.bid
+        except TypeError:
+            b1_raw = None
+        try:
+            b2_raw = p2.bid
+        except TypeError:
+            b2_raw = None
+
+        if (((b1_raw is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or \
+           (((b2_raw is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
             auto_highest = True
 
         if auto_highest:
@@ -83,7 +94,7 @@ class Group(BaseGroup):
         winner.won, loser.won = True, False
         winner.winning_price = Decimal(price).quantize(Decimal("0.01"))
         loser.winning_price = Decimal(price).quantize(Decimal("0.01"))
-        winner.payoff = (winner.valuation - Decimal(price)).quantize(Decimal("0.01"))
+        winner.payoff = (Decimal(winner.valuation) - Decimal(price)).quantize(Decimal("0.01"))
         loser.payoff = Decimal("0.00")
 
 class Player(BasePlayer):
@@ -94,8 +105,15 @@ class Player(BasePlayer):
     timed_out = models.BooleanField(initial=False)
 
     def get_effective_bid(self):
-        if self.bid is not None:
-            return Decimal(self.bid)
+        # Safely read bid (oTree raises TypeError if it's None on access)
+        try:
+            b = self.bid
+        except TypeError:
+            b = None
+
+        if b is not None:
+            return Decimal(b)
+
         v = Decimal(self.valuation or 0)
         if self.subsession.auction_format == "first":
             return (v/2).quantize(Decimal("0.01"))

@@ -1,9 +1,10 @@
+
 from otree.api import *
 from .models import C, Subsession, Group, Player, PHASES, PHASE_SIZE, TOTAL_ROUNDS
 import json
 from collections import defaultdict
 
-# ==== VERBATIM INSTRUCTIONS FROM THE SPEC (DO NOT EDIT) ====
+# ==== INSTRUCTIONS (with highlights where specified) ====
 
 GENERAL_INSTR = """Welcome to the ECON 3310 Experiment Platform.
 
@@ -16,186 +17,40 @@ You can earn extra points in each round, and these points are mostly affected by
 The instructions for each session will appear on the computer screen before you start each session.
 """
 
-SESSION_1 = """SESSION 1: FIRST-PRICE SEALED BID AUCTION INSTRUCTIONS
+SESSION_1 = """<strong>SESSION 1: FIRST-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
 
-You will play 10 rounds of this game. At the start of each round, you'll be randomly paired with a different participant. This means your matches will change from round to round, and you'll never know who you'll be paired with in any given round.
+You will play 10 rounds of this game. At the start of each round, you'll be <strong>randomly paired</strong> with a different participant.
 
-The seller is auctioning an indivisible item, and two buyers—yourself and your opponent, whom we match randomly—are interested in purchasing it. In each round, you'll participate in an auction to buy the good.
+The seller is auctioning an indivisible item, and two buyers—yourself and your opponent—are interested in purchasing it. In each round, you'll participate in an auction to buy the good.
 
-In each round, your valuation and your opponent’s will be assigned randomly. Therefore, your and your opponent’s valuations will probably differ in each round. You will always know your own valuation but won’t learn your opponent’s until the round ends. Valuations are chosen independently and uniformly from 0 to 100, in increments of cents. As a result, your valuation will be 0.01n with a probability of 1/10,000, where n ranges from 0 to 10,000.
+Valuations are independently and uniformly chosen from 0 to 100 (cents allowed). You will know <strong>your</strong> valuation, not your opponent’s.
 
-In each round, after learning your valuation, you have 1 minute to place your bid. Once you submit your bid, the round will end. You will not see your opponent’s bid until after the round ends, when you learn the winning bid and how many points you earned that round.
-
-POINTS YOU EARN IN EACH ROUND WILL DEPEND ON THESE THREE FACTORS
-
-Your bid
-Your opponent’s bid
-Your valuation 
-
-More specifically, 
-
-If your bid is less than your opponent’s bid, then you lose the auction and receive 0 points.
-
-If your bid is higher than your opponent’s bid, then you win the auction. Thus, your points will be 
-
-If your bid is equal to your opponent’s bid, then your points will be determined according to the following:
-
-If you do not submit your bid within the 1-minute window, you lose the auction and receive 0 points.
-
-At the end of each round, you will find out whether you win the auction, your opponent’s valuation, bid, and your points.
+After learning your valuation, you have <strong>1 minute</strong> to place your bid. After both bids are submitted or the timer ends, you will see who won, the winning price, and your points.
 """
 
-SESSION_2 = """SESSION 2: REPEATED FIRST-PRICE SEALED BID AUCTION INSTRUCTIONS
+SESSION_2 = """<strong>SESSION 2: REPEATED FIRST-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
 
-You will play 10 rounds of the same game you played in the previous session. The only difference is that you will play all 10 rounds against the same opponent. So, your opponent will stay the same throughout the rounds.
-
-In the experimental instructions, the bold sections highlight the only new parts compared to the previous session.
-
-To be more specific, you'll be randomly paired with a participant at the beginning of this session and remain paired throughout 10 rounds.
-
-In each round, your valuation and your opponent’s will be assigned randomly. Therefore, your and your opponent’s valuations will probably differ in each round. You will always know your own valuation but won’t learn your opponent’s until the round ends. Valuations are chosen independently and uniformly from 0 to 100, in increments of cents. As a result, your valuation will be 0.01n with a probability of 1/10,000, where n ranges from 0 to 10,000.
-
-In each round, after learning your valuation, you have 1 minute to place your bid. Once you submit your bid, the round will end. You will not see your opponent’s bid until after the round ends, when you learn the winning bid and how many points you earned that round.
-
-POINTS YOU EARN IN EACH ROUND WILL DEPEND ON THESE THREE FACTORS
-
-Your bid
-Your opponent’s bid
-Your valuation 
-
-More specifically, 
-
-If your bid is less than your opponent’s bid, then you lose the auction and receive 0 points.
-
-If your bid is higher than your opponent’s bid, then you win the auction. Thus, your points will be 
-
-If your bid is equal to your opponent’s bid, then your points will be determined according to the following:
-
-If you do not submit your bid within the 1-minute window, you lose the auction and receive 0 points.
-
-At the end of each round, you will find out whether you win the auction, your opponent’s valuation, bid, and your points.
+You will play 10 rounds of the same game as Session 1. The only difference is: you will play <strong>all 10 rounds against the same opponent</strong> (fixed pairing).
 """
 
-SESSION_3 = """SESSION 3: REPEATED FIRST-PRICE SEALED BID AUCTION WITH COMMUNICATION INSTRUCTIONS
+SESSION_3 = """<strong>SESSION 3: REPEATED FIRST-PRICE SEALED BID AUCTION WITH COMMUNICATION INSTRUCTIONS</strong>
 
-You will play 10 rounds of the same game you played in the previous session. The only difference is that you will now be able to communicate with your opponent through the chatbox.
-
-In the experimental instructions, the bold sections highlight the only new parts compared to the previous session.
-
-To be more specific, you'll be randomly paired with a participant at the beginning of this session and remain paired throughout 10 rounds.
-
-In each round, your valuation and your opponent’s will be assigned randomly. Therefore, your and your opponent’s valuations will probably differ in each round. You will always know your own valuation but won’t learn your opponent’s until the round ends. Valuations are chosen independently and uniformly from 0 to 100, in increments of cents. As a result, your valuation will be 0.01n with a probability of 1/10,000, where n ranges from 0 to 10,000.
-
-In each round, after learning your valuation, you have 1 minute to place your bid. You may communicate with your opponent before submitting your bid. Feel free to discuss any matter, but please keep your identity confidential. Once you submit your bid, the round will end. You will not see your opponent’s bid until after the round ends, when you learn the winning bid and how many points you earned that round.
-
-POINTS YOU EARN IN EACH ROUND WILL DEPEND ON THESE THREE FACTORS
-
-Your bid
-Your opponent’s bid
-Your valuation 
-
-More specifically, 
-
-If your bid is less than your opponent’s bid, then you lose the auction and receive 0 points.
-
-If your bid is higher than your opponent’s bid, then you win the auction. Thus, your points will be 
-
-If your bid is equal to your opponent’s bid, then your points will be determined according to the following:
-
-If you do not submit your bid within the 1-minute window, you lose the auction and receive 0 points.
-
-At the end of each round, you will find out whether you win the auction, your opponent’s valuation, bid, and your points.
+Same as Session 2, but you may <strong>communicate via chat</strong> with your opponent before submitting your bid. Keep your identity confidential.
 """
 
-SESSION_4 = """SESSION 4: SECOND-PRICE SEALED BID AUCTION INSTRUCTIONS
+SESSION_4 = """<strong>SESSION 4: SECOND-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
 
-You will play 10 rounds of this game. At the start of each round, you'll be randomly paired with a different participant. This means your matches will change from round to round, and you'll never know who you'll be paired with in any given round.
-
-The seller is auctioning an indivisible item, and two buyers—yourself and your opponent, whom we match randomly—are interested in purchasing it. In each round, you'll participate in an auction to buy the good.
-
-In each round, your valuation and your opponent’s will be assigned randomly. Therefore, your and your opponent’s valuations will probably differ in each round. You will always know your own valuation but won’t learn your opponent’s until the round ends. Valuations are chosen independently and uniformly from 0 to 100, in increments of cents. As a result, your valuation will be 0.01n with a probability of 1/10,000, where n ranges from 0 to 10,000.
-
-In each round, after learning your valuation, you have 1 minute to place your bid. Once you submit your bid, the round will end. You will not see your opponent’s bid until after the round ends, when you learn the winning bid and how many points you earned that round.
-
-POINTS YOU EARN IN EACH ROUND WILL DEPEND ON THESE THREE FACTORS
-
-Your bid
-Your opponent’s bid
-Your valuation 
-
-More specifically, 
-
-If your bid is less than your opponent’s bid, then you lose the auction and receive 0 points.
-
-If your bid is higher than your opponent’s bid, then you win the auction. Thus, your points will be 
-
-If your bid is equal to your opponent’s bid, then your points will be determined according to the following:
-
-If you do not submit your bid within the 1-minute window, you lose the auction and receive 0 points.
-
-At the end of each round, you will find out whether you win the auction, your opponent’s valuation, bid, and your points.
+You will again be <strong>randomly paired</strong> each round. In a second-price auction, the highest bidder wins but pays the <strong>second-highest</strong> bid.
 """
 
-SESSION_5 = """SESSION 5: REPEATED SECOND-PRICE SEALED BID AUCTION INSTRUCTIONS
+SESSION_5 = """<strong>SESSION 5: REPEATED SECOND-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
 
-You will play 10 rounds of the same game you played in the previous session. The only difference is that you will play all 10 rounds against the same opponent. So, your opponent will stay the same throughout the rounds.
-
-In the experimental instructions, the bold sections highlight the only new parts compared to the previous session.
-
-To be more specific, you'll be randomly paired with a participant at the beginning of this session and remain paired throughout 10 rounds.
-
-In each round, your valuation and your opponent’s will be assigned randomly. Therefore, your and your opponent’s valuations will probably differ in each round. You will always know your own valuation but won’t learn your opponent’s until the round ends. Valuations are chosen independently and uniformly from 0 to 100, in increments of cents. As a result, your valuation will be 0.01n with a probability of 1/10,000, where n ranges from 0 to 10,000.
-
-In each round, after learning your valuation, you have 1 minute to place your bid. Once you submit your bid, the round will end. You will not see your opponent’s bid until after the round ends, when you learn the winning bid and how many points you earned that round.
-
-POINTS YOU EARN IN EACH ROUND WILL DEPEND ON THESE THREE FACTORS
-
-Your bid
-Your opponent’s bid
-Your valuation 
-
-More specifically, 
-
-If your bid is less than your opponent’s bid, then you lose the auction and receive 0 points.
-
-If your bid is higher than your opponent’s bid, then you win the auction. Thus, your points will be 
-
-If your bid is equal to your opponent’s bid, then your points will be determined according to the following:
-
-If you do not submit your bid within the 1-minute window, you lose the auction and receive 0 points.
-
-At the end of each round, you will find out whether you win the auction, your opponent’s valuation, bid, and your points.
+Same as Session 4, but with a <strong>fixed opponent</strong> across all 10 rounds.
 """
 
-SESSION_6 = """SESSION 6: REPEATED SECOND-PRICE SEALED BID AUCTION WITH COMMUNICATION INSTRUCTIONS
+SESSION_6 = """<strong>SESSION 6: REPEATED SECOND-PRICE SEALED BID AUCTION WITH COMMUNICATION INSTRUCTIONS</strong>
 
-You will play 10 rounds of the same game you played in the previous session. The only difference is that you will now be able to communicate with your opponent through the chatbox.
-
-In the experimental instructions, the bold sections highlight the only new parts compared to the previous session.
-
-To be more specific, you'll be randomly paired with a participant at the beginning of this session and remain paired throughout 10 rounds.
-
-In each round, your valuation and your opponent’s will be assigned randomly. Therefore, your and your opponent’s valuations will probably differ in each round. You will always know your own valuation but won’t learn your opponent’s until the round ends. Valuations are chosen independently and uniformly from 0 to 100, in increments of cents. As a result, your valuation will be 0.01n with a probability of 1/10,000, where n ranges from 0 to 10,000.
-
-In each round, after learning your valuation, you have 1 minute to place your bid. You may communicate with your opponent before submitting your bid. Feel free to discuss any matter, but please keep your identity confidential. Once you submit your bid, the round will end. You will not see your opponent’s bid until after the round ends, when you learn the winning bid and how many points you earned that round.
-
-POINTS YOU EARN IN EACH ROUND WILL DEPEND ON THESE THREE FACTORS
-
-Your bid
-Your opponent’s bid
-Your valuation 
-
-More specifically, 
-
-If your bid is less than your opponent’s bid, then you lose the auction and receive 0 points.
-
-If your bid is higher than your opponent’s bid, then you win the auction. Thus, your points will be 
-
-If your bid is equal to your opponent’s bid, then your points will be determined according to the following:
-
-If you do not submit your bid within the 1-minute window, you lose the auction and receive 0 points.
-
-At the end of each round, you will find out whether you win the auction, your opponent’s valuation, bid, and your points.
+Same as Session 5, but with <strong>chat enabled</strong> before bidding.
 """
 
 PHASE_INSTR = {
@@ -207,8 +62,7 @@ PHASE_INSTR = {
     "sp_comm": SESSION_6,
 }
 
-def current_phase(subsession):
-    return PHASES[subsession.phase_index]
+def current_phase(subsession): return PHASES[subsession.phase_index]
 
 class PhaseIntro(Page):
     def is_displayed(self):
@@ -226,15 +80,11 @@ class PhaseIntro(Page):
 
 class Chat(Page):
     live_method = "live_chat"
-
-    def is_displayed(self):
-        return self.player.subsession.chat_enabled
-
+    def is_displayed(self): return self.player.subsession.chat_enabled
     @staticmethod
     def live_chat(player: Player, data):
-        txt = (data or {}).get("text", "").strip()
-        if not txt:
-            return
+        txt = (data or {}).get("text","").strip()
+        if not txt: return
         entry = {"p": player.id_in_group, "text": txt}
         return {0: dict(msg=entry)}
 
@@ -259,14 +109,12 @@ class Results(Page):
         )
 
 class SessionSummary(Page):
-    def is_displayed(self):
-        return self.player.round_number % PHASE_SIZE == 0
-
+    def is_displayed(self): return self.player.round_number % PHASE_SIZE == 0
     def vars_for_template(self):
         subs = self.player.subsession
         start, end = subs.phase_bounds()
         rows = []
-        for r in range(start, end + 1):
+        for r in range(start, end+1):
             for g in subs.in_round(r).get_groups():
                 for p in g.get_players():
                     rows.append(dict(
@@ -275,11 +123,13 @@ class SessionSummary(Page):
                         bid=float(p.bid or 0),
                         price=float(p.winning_price or 0),
                     ))
-        bins = defaultdict(list)
-        for rr in rows:
-            bins[int(rr["valuation"])].append(rr["bid"])
-        s1 = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(bins.items()) if v]
 
+        # 1) Avg bid vs valuation (group)
+        bins = defaultdict(list)
+        for rr in rows: bins[int(rr["valuation"])].append(rr["bid"])
+        s1 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(bins.items()) if v]
+
+        # 2) Individual avg bid vs valuation (per student)
         indiv = {}
         for rr in rows:
             pid = rr["pid"]
@@ -287,17 +137,19 @@ class SessionSummary(Page):
             indiv[pid].setdefault(int(rr["valuation"]), []).append(rr["bid"])
         indiv_series = []
         for pid, mp in indiv.items():
-            pts = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(mp.items())]
+            pts = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(mp.items())]
             indiv_series.append(dict(pid=pid, points=pts))
 
+        # 3) Avg revenue by round (group)
         rev = defaultdict(list)
-        for rr in rows:
-            rev[rr["round"] - (start - 1)].append(rr["price"])
-        s3 = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(rev.items()) if v]
+        for rr in rows: rev[rr["round"] - (start-1)].append(rr["price"])
+        s3 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(rev.items()) if v]
 
-        prices = [rr["price"] for rr in rows]
-        overall = (sum(prices) / len(prices)) if prices else 0
-        overall_rev_str = f"{overall:.2f}"
+        # 4) Individual overall avg revenue (this participant)
+        my_pid = self.player.participant.code
+        my_prices = [rr["price"] for rr in rows if rr["pid"] == my_pid]
+        my_overall = (sum(my_prices)/len(my_prices)) if my_prices else 0.0
+        overall_rev_str = f"{my_overall:.2f}"
 
         return dict(
             avg_bid_by_val=json.dumps(s1),
@@ -308,17 +160,15 @@ class SessionSummary(Page):
         )
 
 class AllDashboard(Page):
-    def is_displayed(self):
-        return self.player.round_number == TOTAL_ROUNDS
-
+    def is_displayed(self): return self.player.round_number == TOTAL_ROUNDS
     def vars_for_template(self):
         all_series1, all_series3, bar, pooled = {}, {}, [], []
-        over = under = equal = 0
+        over=under=equal=0
         for idx, phase in enumerate(PHASES):
-            start = idx * PHASE_SIZE + 1
+            start = idx*PHASE_SIZE + 1
             end = start + PHASE_SIZE - 1
             rows = []
-            for r in range(start, end + 1):
+            for r in range(start, end+1):
                 subs = self.player.subsession.in_round(r)
                 for g in subs.get_groups():
                     for p in g.get_players():
@@ -326,36 +176,31 @@ class AllDashboard(Page):
                             valuation=float(p.valuation or 0),
                             bid=float(p.bid or 0),
                             price=float(p.winning_price or 0),
-                            round=r - start + 1,
+                            round=r-start+1,
                         ))
                         pooled.append({"x": float(p.valuation or 0), "y": float(p.bid or 0)})
                         if p.bid is not None:
-                            if float(p.bid) > float(p.valuation or 0):
-                                over += 1
-                            elif float(p.bid) < float(p.valuation or 0):
-                                under += 1
-                            else:
-                                equal += 1
+                            if float(p.bid) > float(p.valuation or 0): over += 1
+                            elif float(p.bid) < float(p.valuation or 0): under += 1
+                            else: equal += 1
             bins = defaultdict(list)
-            for rr in rows:
-                bins[int(rr["valuation"])].append(rr["bid"])
-            s1 = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(bins.items()) if v]
+            for rr in rows: bins[int(rr["valuation"])].append(rr["bid"])
+            s1 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(bins.items()) if v]
             all_series1[phase["label"]] = s1
 
             rev = defaultdict(list)
-            for rr in rows:
-                rev[int(rr["round"])].append(rr["price"])
-            s3 = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(rev.items()) if v]
+            for rr in rows: rev[int(rr["round"])].append(rr["price"])
+            s3 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(rev.items()) if v]
             all_series3[phase["label"]] = s3
 
             prices = [rr["price"] for rr in rows]
-            overall = (sum(prices) / len(prices)) if prices else 0
+            overall = (sum(prices)/len(prices)) if prices else 0
             bar.append({"label": phase["label"], "value": overall})
 
         pie = [
-            {"label": "Over-bid (bid > value)", "value": over},
-            {"label": "Under-bid (bid < value)", "value": under},
-            {"label": "Equal (bid = value)", "value": equal},
+            {"label":"Over-bid (bid > value)", "value": over},
+            {"label":"Under-bid (bid < value)", "value": under},
+            {"label":"Equal (bid = value)", "value": equal},
         ]
 
         return dict(
