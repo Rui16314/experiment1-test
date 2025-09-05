@@ -1,4 +1,3 @@
-
 from otree.api import *
 from .models import C, Subsession, Group, Player, PHASES, PHASE_SIZE, TOTAL_ROUNDS
 import json
@@ -28,7 +27,9 @@ def current_phase(subsession): return PHASES[subsession.phase_index]
 
 class PhaseIntro(Page):
     @staticmethod
-    def is_displayed(player): return (player.round_number-1) % PHASE_SIZE == 0
+    def is_displayed(player):
+        return (player.round_number - 1) % PHASE_SIZE == 0
+
     @staticmethod
     def vars_for_template(player):
         subsess = player.subsession
@@ -42,8 +43,11 @@ class PhaseIntro(Page):
 
 class Chat(Page):
     live_method = "live_chat"
+
     @staticmethod
-    def is_displayed(player): return player.subsession.chat_enabled
+    def is_displayed(player):
+        return player.subsession.chat_enabled
+
     @staticmethod
     def live_chat(player: Player, data):
         txt = (data or {}).get("text","").strip()
@@ -74,7 +78,9 @@ class Results(Page):
 
 class SessionSummary(Page):
     @staticmethod
-    def is_displayed(player): return player.round_number % PHASE_SIZE == 0
+    def is_displayed(player):
+        return player.round_number % PHASE_SIZE == 0
+
     @staticmethod
     def vars_for_template(player: Player):
         subs = player.subsession
@@ -89,8 +95,8 @@ class SessionSummary(Page):
                         bid=float(p.bid or 0),
                         price=float(p.winning_price or 0),
                     ))
-        from collections import defaultdict
-        bins = defaultdict(list)
+        from collections import defaultdict as dd
+        bins = dd(list)
         for rr in rows: bins[int(rr["valuation"])].append(rr["bid"])
         s1 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(bins.items()) if v]
 
@@ -104,8 +110,8 @@ class SessionSummary(Page):
             pts = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(mp.items())]
             indiv_series.append(dict(pid=pid, points=pts))
 
-        rev = defaultdict(list)
-        for rr in rows: rev[rr["round"]- (start-1)].append(rr["price"])
+        rev = dd(list)
+        for rr in rows: rev[rr["round"] - (start-1)].append(rr["price"])
         s3 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(rev.items()) if v]
 
         prices = [rr["price"] for rr in rows]
@@ -121,11 +127,14 @@ class SessionSummary(Page):
 
 class AllDashboard(Page):
     @staticmethod
-    def is_displayed(player): return player.round_number == TOTAL_ROUNDS
+    def is_displayed(player):
+        return player.round_number == TOTAL_ROUNDS
+
     @staticmethod
     def vars_for_template(player: Player):
         all_series1, all_series3, bar, pooled = {}, {}, [], []
         over=under=equal=0
+        from collections import defaultdict as dd
         for idx, phase in enumerate(PHASES):
             start = idx*PHASE_SIZE + 1
             end = start + PHASE_SIZE - 1
@@ -145,12 +154,12 @@ class AllDashboard(Page):
                             if float(p.bid) > float(p.valuation or 0): over += 1
                             elif float(p.bid) < float(p.valuation or 0): under += 1
                             else: equal += 1
-            bins = defaultdict(list)
+            bins = dd(list)
             for rr in rows: bins[int(rr["valuation"])].append(rr["bid"])
             s1 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(bins.items()) if v]
             all_series1[phase["label"]] = s1
 
-            rev = defaultdict(list)
+            rev = dd(list)
             for rr in rows: rev[int(rr["round"])].append(rr["price"])
             s3 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(rev.items()) if v]
             all_series3[phase["label"]] = s3
