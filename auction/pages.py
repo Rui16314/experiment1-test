@@ -166,14 +166,8 @@ class BidPage(Page):
             return None
         if b < 0 or b > 100:
             return "Bid must be between 0 and 100."
-    @staticmethod
-    def before_next_page(player: Player, timeout_happened):
-        if timeout_happened:
-            player.timed_out = True
-        g = player.group
-        ps = g.get_players()
-        if all((p.bid is not None) or p.timed_out for p in ps):
-            g.set_winner_and_payoffs()
+    class Compute(WaitPage):
+    after_all_players_arrive = 'set_winner_and_payoffs'
 
 class Results(Page):
     @staticmethod
@@ -238,4 +232,4 @@ class SessionSummary(Page):
             session_name=subsess.session.config["name"],
         )
 
-page_sequence = [Intro, Chat, BidPage, Results, SessionSummary]
+page_sequence = [Intro, Chat, BidPage, Compute, Results, SessionSummary]

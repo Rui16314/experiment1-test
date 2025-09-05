@@ -44,7 +44,7 @@ class Group(BaseGroup):
 
         # if any auto-bid was highest → both zero
         auto_highest = False
-        if (p1.timed_out and b1 >= b2 and b1 > 0) or (p2.timed_out and b2 >= b1 and b2 > 0):
+        if (((p1.bid is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or (((p2.bid is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
             auto_highest = True
         if auto_highest:
             for pl in [p1, p2]:
