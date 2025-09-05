@@ -68,7 +68,7 @@ class Group(BaseGroup):
             winner, loser = _r.choice([(p1,p2),(p2,p1)])
             price = b1 if self.subsession.auction_format == "first" else b2
 
-        # highest bid came from an auto/default bid -> both zero
+        # If highest bid came from a default/timeout bid -> both zero
         def raw_bid(pl):
             try:
                 return pl.bid
@@ -76,8 +76,7 @@ class Group(BaseGroup):
                 return None
 
         auto_highest = False
-        if (((raw_bid(p1) is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or \
-           (((raw_bid(p2) is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
+        if (((raw_bid(p1) is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or            (((raw_bid(p2) is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
             auto_highest = True
 
         if auto_highest:
@@ -101,7 +100,6 @@ class Player(BasePlayer):
     timed_out = models.BooleanField(initial=False)
 
     def get_effective_bid(self):
-        # oTree raises TypeError if None; guard it
         try:
             b = self.bid
         except TypeError:

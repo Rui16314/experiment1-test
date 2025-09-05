@@ -15,30 +15,12 @@ You can earn extra points in each round, and these points are mostly affected by
 The instructions for each session will appear on the computer screen before you start each session.
 """
 
-SESSION_1 = """<strong>SESSION 1: FIRST-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
-
-You will be <strong>randomly paired</strong> with a new opponent each round.
-"""
-SESSION_2 = """<strong>SESSION 2: REPEATED FIRST-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
-
-You will play against the <strong>same opponent</strong> for all 10 rounds.
-"""
-SESSION_3 = """<strong>SESSION 3: REPEATED FIRST-PRICE SEALED BID AUCTION WITH COMMUNICATION INSTRUCTIONS</strong>
-
-Same as Session 2, but with <strong>chat enabled</strong> before bidding.
-"""
-SESSION_4 = """<strong>SESSION 4: SECOND-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
-
-Random pairing each round; winner pays the <strong>second-highest</strong> bid.
-"""
-SESSION_5 = """<strong>SESSION 5: REPEATED SECOND-PRICE SEALED BID AUCTION INSTRUCTIONS</strong>
-
-Same as Session 4, but with a <strong>fixed opponent</strong> across all rounds.
-"""
-SESSION_6 = """<strong>SESSION 6: REPEATED SECOND-PRICE SEALED BID AUCTION WITH COMMUNICATION INSTRUCTIONS</strong>
-
-Fixed opponent + <strong>chat</strong> before bidding.
-"""
+SESSION_1 = "<strong>SESSION 1: FIRST-PRICE SEALED BID AUCTION</strong>\nYou are <strong>randomly paired</strong> with a new opponent each round."
+SESSION_2 = "<strong>SESSION 2: REPEATED FIRST-PRICE SEALED BID AUCTION</strong>\nYou play the <strong>same opponent</strong> for all 10 rounds (fixed pairing)."
+SESSION_3 = "<strong>SESSION 3: REPEATED FIRST-PRICE WITH COMMUNICATION</strong>\nSame as Session 2, but <strong>chat is enabled</strong> before bidding."
+SESSION_4 = "<strong>SESSION 4: SECOND-PRICE SEALED BID AUCTION</strong>\nRandom pairing each round. Winner pays the <strong>second-highest</strong> bid."
+SESSION_5 = "<strong>SESSION 5: REPEATED SECOND-PRICE</strong>\nSame as Session 4, but with a <strong>fixed opponent</strong> across all rounds."
+SESSION_6 = "<strong>SESSION 6: REPEATED SECOND-PRICE WITH COMMUNICATION</strong>\nFixed opponent + <strong>chat</strong> before bidding."
 
 PHASE_INSTR = {
     "fp_random": SESSION_1,

@@ -1,1 +1,1 @@
-web: otree prodserver
+web: otree prodserver 1
