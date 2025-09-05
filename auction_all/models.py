@@ -68,12 +68,9 @@ class Group(BaseGroup):
             winner, loser = _r.choice([(p1,p2),(p2,p1)])
             price = b1 if self.subsession.auction_format == "first" else b2
 
-        # Highest bid came from default/timeout -> both zero
         def raw_bid(pl):
-            try:
-                return pl.bid
-            except TypeError:
-                return None
+            try: return pl.bid
+            except TypeError: return None
 
         auto_highest = False
         if (((raw_bid(p1) is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or            (((raw_bid(p2) is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
@@ -87,10 +84,10 @@ class Group(BaseGroup):
             return
 
         winner.won, loser.won = True, False
-        winner.winning_price = Decimal(price).quantize(Decimal("0.01"))
-        loser.winning_price = Decimal(price).quantize(Decimal("0.01"))
-        winner.payoff = (Decimal(winner.valuation) - Decimal(price)).quantize(Decimal("0.01"))
-        loser.payoff = Decimal("0.00")
+        winner.winning_price = price
+        loser.winning_price = price
+        winner.payoff = (winner.valuation - price)
+        loser.payoff = cu(0)
 
 class Player(BasePlayer):
     valuation = models.CurrencyField()
@@ -105,9 +102,9 @@ class Player(BasePlayer):
         except TypeError:
             b = None
         if b is not None:
-            return Decimal(b)
-        v = Decimal(self.valuation or 0)
+            return b
+        v = self.valuation or cu(0)
         if self.subsession.auction_format == "first":
-            return (v/2).quantize(Decimal("0.01"))
+            return v/2
         else:
-            return v.quantize(Decimal("0.01"))
+            return v

@@ -4,9 +4,17 @@ from .models import C, Subsession, Group, Player, PHASES, PHASE_SIZE, TOTAL_ROUN
 import json
 from collections import defaultdict
 
-GENERAL_INSTR = "Welcome to the ECON 3310 Experiment Platform.\n\nThis experiment has two parts. Each part includes three separate sessions. In each session, you'll complete 10 rounds. Therefore, you will play an auction game over 6 sessions, totaling 60 rounds. Each round is expected to take about 1 minute or less. Overall, the experiment should take no more than 75 minutes, including review of instructions.\n\nParticipating in this experiment will earn you 100 POINTS.\n\nYou can earn extra points in each round, and these points are mostly affected by your choices and those of your opponents. Points earned in each round and session will be added up. Therefore, each round matters, and it's important to make the most of each one.\n\nThe instructions for each session will appear on the computer screen before you start each session.\n"
+GENERAL_INSTR = """Welcome to the ECON 3310 Experiment Platform.
 
-# Concise session headers remain; general instructions are verbatim above.
+This experiment has two parts. Each part includes three separate sessions. In each session, you'll complete 10 rounds. Therefore, you will play an auction game over 6 sessions, totaling 60 rounds. Each round is expected to take about 1 minute or less. Overall, the experiment should take no more than 75 minutes, including review of instructions.
+
+Participating in this experiment will earn you 100 POINTS.
+
+You can earn extra points in each round, and these points are mostly affected by your choices and those of your opponents. Points earned in each round and session will be added up. Therefore, each round matters, and it's important to make the most of each one.
+
+The instructions for each session will appear on the computer screen before you start each session.
+"""
+
 SESSION_1 = "<strong>SESSION 1: FIRST-PRICE SEALED BID AUCTION</strong>\nYou are <strong>randomly paired</strong> with a new opponent each round."
 SESSION_2 = "<strong>SESSION 2: REPEATED FIRST-PRICE SEALED BID AUCTION</strong>\nYou play the <strong>same opponent</strong> for all 10 rounds (fixed pairing)."
 SESSION_3 = "<strong>SESSION 3: REPEATED FIRST-PRICE WITH COMMUNICATION</strong>\nSame as Session 2, but <strong>chat is enabled</strong> before bidding."
@@ -22,6 +30,12 @@ PHASE_INSTR = {
     "sp_fixed": SESSION_5,
     "sp_comm": SESSION_6,
 }
+
+def _cfloat(x):
+    try:
+        return float(x)
+    except TypeError:
+        return 0.0
 
 def current_phase(subsession): return PHASES[subsession.phase_index]
 
@@ -61,12 +75,12 @@ class Results(Page):
     def vars_for_template(self):
         other = self.player.get_others_in_group()[0]
         return dict(
-            my_v=float(self.player.valuation),
-            my_b=float(self.player.bid or 0),
-            other_v=float(other.valuation),
-            other_b=float(other.bid or 0),
+            my_v=_cfloat(self.player.valuation),
+            my_b=_cfloat(getattr(self.player, "bid", None)),
+            other_v=_cfloat(other.valuation),
+            other_b=_cfloat(getattr(other, "bid", None)),
             won=self.player.won,
-            price=float(self.player.winning_price or 0),
+            price=_cfloat(getattr(self.player, "winning_price", None)),
         )
 
 class SessionSummary(Page):
@@ -80,33 +94,34 @@ class SessionSummary(Page):
                 for p in g.get_players():
                     rows.append(dict(
                         round=r, pid=p.participant.code,
-                        valuation=float(p.valuation or 0),
-                        bid=float(p.bid or 0),
-                        price=float(p.winning_price or 0),
-                        payoff=float(p.payoff or 0),
+                        valuation=_cfloat(getattr(p, "valuation", None)),
+                        bid=_cfloat(getattr(p, "bid", None)),
+                        price=_cfloat(getattr(p, "winning_price", None)),
+                        payoff=_cfloat(getattr(p, "payoff", None)),
                     ))
-        # (1) Group avg bid vs valuation
-        bins = defaultdict(list)
-        for rr in rows: bins[int(rr["valuation"])].append(rr["bid"])
+        bins = {}
+        for rr in rows:
+            k = int(rr["valuation"])
+            bins.setdefault(k, []).append(rr["bid"])
         s1 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(bins.items()) if v]
 
-        # (2) Individual avg bid vs valuation
         indiv = {}
         for rr in rows:
             pid = rr["pid"]
             indiv.setdefault(pid, {})
-            indiv[pid].setdefault(int(rr["valuation"]), []).append(rr["bid"])
+            k = int(rr["valuation"])
+            indiv[pid].setdefault(k, []).append(rr["bid"])
         indiv_series = []
         for pid, mp in indiv.items():
             pts = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(mp.items())]
             indiv_series.append(dict(pid=pid, points=pts))
 
-        # (3) Group avg revenue (winning price) by within-session round
-        rev = defaultdict(list)
-        for rr in rows: rev[rr["round"] - (start-1)].append(rr["price"])
+        rev = {}
+        for rr in rows:
+            k = rr["round"] - (start-1)
+            rev.setdefault(k, []).append(rr["price"])
         s3 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(rev.items()) if v]
 
-        # (4) Your average payoff (this session)
         my_pid = self.player.participant.code
         my_payoffs = [rr["payoff"] for rr in rows if rr["pid"] == my_pid]
         my_avg_payoff_str = f"{(sum(my_payoffs)/len(my_payoffs) if my_payoffs else 0):.2f}"
@@ -133,23 +148,29 @@ class AllDashboard(Page):
                 for g in subs.get_groups():
                     for p in g.get_players():
                         rows.append(dict(
-                            valuation=float(p.valuation or 0),
-                            bid=float(p.bid or 0),
-                            price=float(p.winning_price or 0),
+                            valuation=_cfloat(getattr(p, "valuation", None)),
+                            bid=_cfloat(getattr(p, "bid", None)),
+                            price=_cfloat(getattr(p, "winning_price", None)),
                             round=r-start+1,
                         ))
-                        pooled.append({"x": float(p.valuation or 0), "y": float(p.bid or 0)})
-                        if p.bid is not None:
-                            if float(p.bid) > float(p.valuation or 0): over += 1
-                            elif float(p.bid) < float(p.valuation or 0): under += 1
+                        pooled.append({"x": _cfloat(getattr(p, "valuation", None)), "y": _cfloat(getattr(p, "bid", None))})
+                        if getattr(p, "bid", None) is not None:
+                            b = _cfloat(getattr(p, "bid", None))
+                            v = _cfloat(getattr(p, "valuation", None))
+                            if b > v: over += 1
+                            elif b < v: under += 1
                             else: equal += 1
-            bins = defaultdict(list)
-            for rr in rows: bins[int(rr["valuation"])].append(rr["bid"])
+            bins = {}
+            for rr in rows:
+                k = int(rr["valuation"])
+                bins.setdefault(k, []).append(rr["bid"])
             s1 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(bins.items()) if v]
             all_series1[phase["label"]] = s1
 
-            rev = defaultdict(list)
-            for rr in rows: rev[int(rr["round"])].append(rr["price"])
+            rev = {}
+            for rr in rows:
+                k = int(rr["round"])
+                rev.setdefault(k, []).append(rr["price"])
             s3 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(rev.items()) if v]
             all_series3[phase["label"]] = s3
 
