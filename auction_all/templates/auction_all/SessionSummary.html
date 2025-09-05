@@ -1,4 +1,3 @@
-
 {% extends 'auction_all/Base.html' %}
 {% block content %}
 <h2>Session results — {{ phase_label }}</h2>
@@ -33,20 +32,39 @@
   {{ super }}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
+    // (1) Avg bid vs valuation (all players)
     const s1 = {{ avg_bid_by_val|safe }};
     if (s1.length) {
-      new Chart(document.getElementById('c1'),{type:'line',data:{datasets:[{label:'Avg bid',data:s1}]},options:{parsing:false,scales:{x:{title:{display:true,text:'Valuation'}},y:{title:{display:true,text:'Avg Bid'}}}}});
+      new Chart(document.getElementById('c1'),{
+        type:'line',
+        data:{datasets:[{label:'Avg bid', data:s1, parsing:false, pointRadius:3, tension:0 }]},
+        options:{scales:{x:{title:{display:true,text:'Valuation'}},y:{title:{display:true,text:'Avg Bid'}}}}
+      });
     } else { document.getElementById('c1_empty').style.display='block'; }
 
+    // (2) Individual avg bid vs valuation
     const indiv = {{ indiv_series|safe }};
     const wrap=document.getElementById('indiv');
     if (indiv.length) {
-      indiv.forEach(series=>{const c=document.createElement('canvas');wrap.appendChild(c);new Chart(c,{type:'line',data:{datasets:[{label:'Participant '+series.pid,data:series.points}]},options:{parsing:false,scales:{x:{title:{display:true,text:'Valuation'}},y:{title:{display:true,text:'Avg Bid'}}}}});});
+      indiv.forEach(series=>{
+        const c=document.createElement('canvas');
+        wrap.appendChild(c);
+        new Chart(c,{
+          type:'line',
+          data:{datasets:[{label:'Participant '+series.pid, data:series.points, parsing:false, pointRadius:2, tension:0}]},
+          options:{scales:{x:{title:{display:true,text:'Valuation'}},y:{title:{display:true,text:'Avg Bid'}}}}
+        });
+      });
     } else { document.getElementById('indiv_empty').style.display='block'; }
 
+    // (3) Avg revenue by round
     const s3 = {{ rev_by_round|safe }};
     if (s3.length) {
-      new Chart(document.getElementById('c3'),{type:'line',data:{datasets:[{label:'Avg revenue',data:s3}]},options:{parsing:false,scales:{x:{title:{display:true,text:'Round (within session)'}},y:{title:{display:true,text:'Revenue'}}}}});
+      new Chart(document.getElementById('c3'),{
+        type:'line',
+        data:{datasets:[{label:'Avg revenue', data:s3, parsing:false, pointRadius:3, tension:0 }]},
+        options:{scales:{x:{title:{display:true,text:'Round (within session)'}},y:{title:{display:true,text:'Revenue'}}}}
+      });
     } else { document.getElementById('c3_empty').style.display='block'; }
   </script>
 {% endblock %}

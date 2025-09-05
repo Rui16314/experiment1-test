@@ -1,4 +1,3 @@
-
 {% extends 'auction_all/Base.html' %}
 {% block content %}
 <h2>All Sessions Dashboard (5–8)</h2>
@@ -58,15 +57,33 @@
 
     function drawLine(id,label,data,xTitle,yTitle){
       const el = document.getElementById(id);
-      if (data && data.length){ new Chart(el,{type:'line',data:{datasets:[{label,data}]},options:{parsing:false,scales:{x:{title:{display:true,text:xTitle}},y:{title:{display:true,text:yTitle}}}}}); }
-      else { el.insertAdjacentHTML('afterend','<div class="text-muted small">No data</div>'); }
+      if (data && data.length){
+        new Chart(el,{
+          type:'line',
+          data:{datasets:[{label, data, parsing:false, pointRadius:2, tension:0 }]},
+          options:{scales:{x:{title:{display:true,text:xTitle}},y:{title:{display:true,text:yTitle}}}}
+        });
+      } else {
+        el.insertAdjacentHTML('afterend','<div class="text-muted small">No data</div>');
+      }
     }
 
     let i=1; Object.keys(series1).forEach(lbl=>drawLine('s1_'+(i++), lbl, series1[lbl], 'Valuation', 'Avg bid'));
     i=1; Object.keys(series3).forEach(lbl=>drawLine('s3_'+(i++), lbl, series3[lbl], 'Round', 'Avg revenue'));
 
-    new Chart(document.getElementById('bar_overall'),{type:'bar',data:{labels:bar.map(x=>x.label),datasets:[{label:'Overall avg revenue',data:bar.map(x=>x.value)}]},options:{scales:{y:{title:{display:true,text:'Revenue'}}}}});
-    new Chart(document.getElementById('scatter'),{type:'scatter',data:{datasets:[{label:'Bids vs Valuations',data:pooled}]} ,options:{scales:{x:{title:{display:true,text:'Valuation'}},y:{title:{display:true,text:'Bid'}}}}});
-    new Chart(document.getElementById('pie'),{type:'pie',data:{labels:pie.map(p=>p.label),datasets:[{data:pie.map(p=>p.value)}]}});
+    new Chart(document.getElementById('bar_overall'),{
+      type:'bar',
+      data:{labels:bar.map(x=>x.label),datasets:[{label:'Overall avg revenue',data:bar.map(x=>x.value)}]},
+      options:{scales:{y:{title:{display:true,text:'Revenue'}}}}
+    });
+    new Chart(document.getElementById('scatter'),{
+      type:'scatter',
+      data:{datasets:[{label:'Bids vs Valuations',data:pooled, parsing:false}]},
+      options:{scales:{x:{title:{display:true,text:'Valuation'}},y:{title:{display:true,text:'Bid'}}}}
+    });
+    new Chart(document.getElementById('pie'),{
+      type:'pie',
+      data:{labels:pie.map(p=>p.label),datasets:[{data:pie.map(p=>p.value)}]}
+    });
   </script>
 {% endblock %}

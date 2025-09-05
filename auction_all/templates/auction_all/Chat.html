@@ -1,14 +1,18 @@
-
 {% extends 'auction_all/Base.html' %}
 {% block content %}
 <h3>Chat with your opponent</h3>
 <p>Your valuation this round: <strong>{{ my_valuation }}</strong></p>
+
 <div id="chat" class="chatbox"></div>
+
 <div class="input-group mt-2">
   <input id="msg" class="form-control" placeholder="Type a message..." autofocus />
   <button id="sendBtn" type="button" class="btn btn-secondary">Send</button>
 </div>
-<form method="post" class="mt-3"><button class="btn btn-primary" name="next">Go to bidding</button></form>
+
+<form method="post" class="mt-3">
+  <button class="btn btn-primary" name="next">Go to bidding</button>
+</form>
 {% endblock %}
 
 {% block scripts %}
@@ -20,16 +24,18 @@
       p.textContent=(e.p==={{ player.id_in_group }}?'You: ':'Opponent: ')+e.text;
       box.appendChild(p); box.scrollTop=box.scrollHeight;
     }
+    // oTree classic callback
     function liveRecv(data){ if(data && data.msg) renderLine(data.msg); }
+    // oTree event-style callback
     document.addEventListener('otreeLiveRecv', function(ev){
       if(ev.detail && ev.detail.msg) renderLine(ev.detail.msg);
     });
+    // prevent form submission; send via websockets
     const msg=document.getElementById('msg');
     const sendBtn=document.getElementById('sendBtn');
     function doSend(){
       const t=(msg.value||'').trim(); if(!t) return;
-      liveSend({text:t});
-      msg.value=''; msg.focus();
+      liveSend({text:t}); msg.value=''; msg.focus();
     }
     sendBtn.addEventListener('click', e=>{e.preventDefault(); doSend();});
     msg.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doSend(); }});
