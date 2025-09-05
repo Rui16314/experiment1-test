@@ -9,21 +9,26 @@
   <button id="sendBtn" type="button" class="btn btn-secondary">Send</button>
 </div>
 <form method="post" class="mt-3"><button class="btn btn-primary" name="next">Go to bidding</button></form>
-<script>
-const box=document.getElementById('chat');
-const msg=document.getElementById('msg');
-const sendBtn=document.getElementById('sendBtn');
-function render(e){
-  const p=document.createElement('div');
-  p.textContent=(e.p==={{ player.id_in_group }}?'You: ':'Opponent: ')+e.text;
-  box.appendChild(p); box.scrollTop=box.scrollHeight;
-}
-function doSend(){
-  const t=msg.value.trim(); if(!t) return;
-  liveSend({text:t}); msg.value=''; msg.focus();
-}
-sendBtn.addEventListener('click',e=>{e.preventDefault(); doSend();});
-msg.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doSend(); }});
-function liveRecv(data){ if(data.msg) render(data.msg); }
-</script>
+{% endblock %}
+
+{% block scripts %}
+  {{ super }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const box=document.getElementById('chat');
+    const msg=document.getElementById('msg');
+    const sendBtn=document.getElementById('sendBtn');
+    function render(e){
+      const p=document.createElement('div');
+      p.textContent=(e.p==={{ player.id_in_group }}?'You: ':'Opponent: ')+e.text;
+      box.appendChild(p); box.scrollTop=box.scrollHeight;
+    }
+    function doSend(){
+      const t=msg.value.trim(); if(!t) return;
+      liveSend({text:t}); msg.value=''; msg.focus();
+    }
+    sendBtn.addEventListener('click',e=>{e.preventDefault(); doSend();});
+    msg.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doSend(); }});
+    function liveRecv(data){ if(data.msg) render(data.msg); }
+  </script>
 {% endblock %}

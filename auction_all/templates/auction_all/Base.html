@@ -12,7 +12,8 @@
       .chart-box canvas{height:320px !important; max-height:320px}
       .chatbox{border:1px solid #ddd;padding:10px;height:220px;overflow-y:auto}
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
-  <body>{% block content %}{% endblock %}</body>
+  <body>{% block content %}{% endblock %}
+    {% block scripts %}{% endblock %}
+  </body>
 </html>
