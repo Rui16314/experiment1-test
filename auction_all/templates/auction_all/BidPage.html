@@ -1,0 +1,12 @@
+
+{% extends 'auction_all/Base.html' %}
+{% block content %}
+<h3>Round {{ player.round_number }} of {{ Constants.NUM_ROUNDS }}</h3>
+<p>Your valuation this round: <strong>{{ player.valuation }}</strong></p>
+<form method="post">
+  {% csrf_token %}
+  {% formfield player.bid label="Your bid (0–100, cents allowed)" %}
+  <button class="btn btn-primary">Submit bid</button>
+</form>
+<p class="text-muted mt-3">If you do not submit within 60 seconds, the system will submit a default bid for you.</p>
+{% endblock %}

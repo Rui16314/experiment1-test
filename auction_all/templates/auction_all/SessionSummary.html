@@ -1,0 +1,59 @@
+
+{% extends 'auction_all/Base.html' %}
+{% block content %}
+<h2>Session results — {{ phase_label }}</h2>
+
+<div class="chart-box">
+  <h5>1) Average bid vs valuation (all players)</h5>
+  <canvas id="c1"></canvas>
+</div>
+
+<div class="chart-box">
+  <h5>2) Individual average bid vs valuation (one chart per student)</h5>
+  <div id="indiv"></div>
+</div>
+
+<div class="chart-box">
+  <h5>3) Average revenue (winning price) by round</h5>
+  <canvas id="c3"></canvas>
+</div>
+
+<div class="chart-box">
+  <h5>4) Overall average revenue (this session)</h5>
+  <div class="display-6">{{ overall_rev|floatformat:2 }}</div>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-primary mt-4">Continue</button>
+</form>
+
+<script>
+const s1 = {{ avg_bid_by_val|safe }};
+new Chart(document.getElementById('c1'), {
+  type: 'line',
+  data: { datasets: [{ label: 'Avg bid', data: s1 }] },
+  options: { parsing: false, scales: { x: { title: {display: true, text: 'Valuation'}}, y: {title:{display:true, text: 'Avg Bid'}} } }
+});
+
+const indiv = {{ indiv_series|safe }};
+const indivDiv = document.getElementById('indiv');
+indiv.forEach((series) => {
+  const c = document.createElement('canvas');
+  c.style.maxHeight = '240px';
+  indivDiv.appendChild(c);
+  new Chart(c, {
+    type: 'line',
+    data: { datasets: [{ label: 'Participant '+series.pid, data: series.points }] },
+    options: { parsing: false, scales: { x: { title: {display: true, text: 'Valuation'}}, y: {title:{display:true, text: 'Avg Bid'}} } }
+  });
+});
+
+const s3 = {{ rev_by_round|safe }};
+new Chart(document.getElementById('c3'), {
+  type: 'line',
+  data: { datasets: [{ label: 'Avg revenue', data: s3 }] },
+  options: { parsing: false, scales: { x: { title: {display: true, text: 'Round (within session)'}}, y: {title:{display:true, text: 'Revenue'}} } }
+});
+</script>
+{% endblock %}

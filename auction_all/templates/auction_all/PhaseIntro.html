@@ -1,0 +1,14 @@
+
+{% extends 'auction_all/Base.html' %}
+{% block content %}
+<h2>{{ phase_label }}</h2>
+{% if general_instructions %}
+  <pre style="white-space: pre-wrap;">{{ general_instructions }}</pre>
+  <hr/>
+{% endif %}
+<pre style="white-space: pre-wrap;">{{ session_instructions }}</pre>
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-primary">Start</button>
+</form>
+{% endblock %}
