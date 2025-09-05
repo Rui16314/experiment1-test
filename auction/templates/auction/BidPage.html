@@ -5,7 +5,7 @@
 <p>Your valuation this round: <strong>{{ player.valuation }}</strong></p>
 
 <form method="post">
-  {% csrf_token %}
+  
   {% formfield player.bid label="Your bid (0–100, cents allowed)" %}
   <button class="btn btn-primary">Submit bid</button>
 </form>

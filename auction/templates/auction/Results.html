@@ -11,7 +11,7 @@
   <li><strong>{% if won %}You won this round{% else %}You lost this round{% endif %}</strong></li>
 </ul>
 <form method="post">
-  {% csrf_token %}
+  
   <button class="btn btn-primary">Continue</button>
 </form>
 {% endblock %}
