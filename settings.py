@@ -10,32 +10,32 @@ SESSION_CONFIGS = [
 
     dict(
         name="fp_random", display_name="Exp 1: First-Price (Random Opponent)",
-        num_demo_participants=2, app_sequence=["auction"],
+        num_demo_participants=2, app_sequence=["auction_all"],
         auction_format="first", partner="random", chat_enabled=False,
     ),
     dict(
         name="fp_fixed", display_name="Exp 2: First-Price (Fixed Opponent)",
-        num_demo_participants=2, app_sequence=["auction"],
+        num_demo_participants=2, app_sequence=["auction_all"],
         auction_format="first", partner="fixed", chat_enabled=False,
     ),
     dict(
         name="fp_comm", display_name="Exp 3: First-Price (Fixed Opponent with Chat)",
-        num_demo_participants=2, app_sequence=["auction"],
+        num_demo_participants=2, app_sequence=["auction_all"],
         auction_format="first", partner="fixed", chat_enabled=True,
     ),
     dict(
         name="sp_random", display_name="Exp 4: Second-Price (Random Opponent)",
-        num_demo_participants=2, app_sequence=["auction"],
+        num_demo_participants=2, app_sequence=["auction_all"],
         auction_format="second", partner="random", chat_enabled=False,
     ),
     dict(
         name="sp_fixed", display_name="Exp 5: Second-Price (Fixed Opponent)",
-        num_demo_participants=2, app_sequence=["auction"],
+        num_demo_participants=2, app_sequence=["auction_all"],
         auction_format="second", partner="fixed", chat_enabled=False,
     ),
     dict(
         name="sp_comm", display_name="Exp 6: Second-Price (Fixed Opponent with Chat)",
-        num_demo_participants=2, app_sequence=["auction"],
+        num_demo_participants=2, app_sequence=["auction_all"],
         auction_format="second", partner="fixed", chat_enabled=True,
     ),
 ]
@@ -60,4 +60,4 @@ DEMO_PAGE_INTRO_HTML = """
 <p>ECON 3310 Auction Experiments</p>
 """
 
-SECRET_KEY = environ.get("OTREE_SECRET_KEY", "CCYuBmuit2mkU6DtmlLR6ku1sSCSHnUweJYsRy751mQ")
+SECRET_KEY = environ.get("OTREE_SECRET_KEY")
