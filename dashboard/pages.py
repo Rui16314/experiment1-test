@@ -17,10 +17,6 @@ LABELS = [
 
 class Dash(Page):
     @staticmethod
-    def is_displayed(player):
-        return True
-
-    @staticmethod
     def vars_for_template(player: Player):
         # pick the most recent session for each named config
         latest_by_name = {}
