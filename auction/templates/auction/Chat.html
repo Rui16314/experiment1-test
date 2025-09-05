@@ -1,0 +1,32 @@
+
+{% extends 'auction/Base.html' %}
+{% block content %}
+<h3>Chat with your opponent</h3>
+<div id="chat" class="chatbox"></div>
+<div class="input-group mt-2">
+  <input id="msg" class="form-control" placeholder="Type a message..."/>
+  <button class="btn btn-secondary" onclick="send()">Send</button>
+</div>
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-primary mt-3">Go to bidding</button>
+</form>
+<script>
+const box = document.getElementById('chat');
+function render(entry){
+  const p = document.createElement('div');
+  p.textContent = (entry.p=={{ player.id_in_group }} ? 'You: ' : 'Opponent: ') + entry.text;
+  box.appendChild(p);
+  box.scrollTop = box.scrollHeight;
+}
+function send(){
+  const txt = document.getElementById('msg');
+  if (!txt.value.trim()) return;
+  liveSend({text: txt.value});
+  txt.value='';
+}
+function liveRecv(data){
+  if (data.msg){ render(data.msg); }
+}
+</script>
+{% endblock %}

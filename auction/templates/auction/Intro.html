@@ -1,0 +1,12 @@
+
+{% extends 'auction/Base.html' %}
+{% block content %}
+<h2>Welcome</h2>
+<pre style="white-space: pre-wrap;">{{ general_instructions }}</pre>
+<hr/>
+<pre style="white-space: pre-wrap;">{{ session_instructions }}</pre>
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-primary">Continue</button>
+</form>
+{% endblock %}
