@@ -23,7 +23,7 @@ class Subsession(BaseSubsession):
     auction_format = models.StringField()
     partner = models.StringField()
     chat_enabled = models.BooleanField(initial=False)
-    phase_index = models.IntegerField()  # 0..5
+    phase_index = models.IntegerField()
 
     def phase_bounds(self):
         start = self.phase_index * PHASE_SIZE + 1
@@ -31,25 +31,21 @@ class Subsession(BaseSubsession):
         return start, end
 
     def creating_session(self):
-        # Determine phase from round
         self.phase_index = (self.round_number - 1) // PHASE_SIZE
         phase = PHASES[self.phase_index]
         self.auction_format = phase["auction_format"]
         self.partner = phase["partner"]
         self.chat_enabled = phase["chat"]
 
-        # Grouping behaviour
         start, end = self.phase_bounds()
         if self.partner == "random":
             self.group_randomly()
         else:
-            # fixed: group at phase start; copy grouping for remaining rounds
             if self.round_number == start:
                 self.group_randomly()
             else:
                 self.group_like_round(start)
 
-        # Draw valuations each round
         for p in self.get_players():
             cents = random.randint(0, 10000)
             p.valuation = Decimal(cents) / Decimal(100)
@@ -57,9 +53,10 @@ class Subsession(BaseSubsession):
 class Group(BaseGroup):
     def set_winner_and_payoffs(self):
         p1, p2 = self.get_players()
+        # get bids; if missing, compute default implied by format
         b1 = p1.get_effective_bid()
         b2 = p2.get_effective_bid()
-        # tie-break randomly
+
         if b1 > b2:
             winner, loser = p1, p2
             price = b1 if self.subsession.auction_format == "first" else b2
@@ -71,14 +68,15 @@ class Group(BaseGroup):
             winner, loser = _r.choice([(p1,p2),(p2,p1)])
             price = b1 if self.subsession.auction_format == "first" else b2
 
-        # special rule: if a timed-out auto-bid is highest -> both zero
+        # If a default/timeout bid is the highest → both zero
         auto_highest = False
-        if (((p1.bid is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or (((p2.bid is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
+        if (((p1.bid is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or            (((p2.bid is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
             auto_highest = True
+
         if auto_highest:
             for pl in [p1,p2]:
-                pl.won = False
                 pl.payoff = cu(0)
+                pl.won = False
                 pl.winning_price = 0
             return
 
