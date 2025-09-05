@@ -52,7 +52,11 @@ const bar = {{ bar_overall|safe }};
 const pooled = {{ pooled_points|safe }};
 const pie = {{ pie|safe }};
 
-function drawLine(id,label,data,xTitle,yTitle){new Chart(document.getElementById(id),{type:'line',data:{datasets:[{label,data}]},options:{parsing:false,scales:{x:{title:{display:true,text:xTitle}},y:{title:{display:true,text:yTitle}}}}});}
+function drawLine(id,label,data,xTitle,yTitle){
+  const el = document.getElementById(id);
+  if (data && data.length){ new Chart(el,{type:'line',data:{datasets:[{label,data}]},options:{parsing:false,scales:{x:{title:{display:true,text:xTitle}},y:{title:{display:true,text:yTitle}}}}}); }
+  else { el.insertAdjacentHTML('afterend','<div class="text-muted small">No data</div>'); }
+}
 
 let i=1; Object.keys(series1).forEach(lbl=>drawLine('s1_'+(i++), lbl, series1[lbl], 'Valuation', 'Avg bid'));
 i=1; Object.keys(series3).forEach(lbl=>drawLine('s3_'+(i++), lbl, series3[lbl], 'Round', 'Avg revenue'));

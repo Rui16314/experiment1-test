@@ -4,17 +4,9 @@ from .models import C, Subsession, Group, Player, PHASES, PHASE_SIZE, TOTAL_ROUN
 import json
 from collections import defaultdict
 
-GENERAL_INSTR = """Welcome to the ECON 3310 Experiment Platform.
+GENERAL_INSTR = "Welcome to the ECON 3310 Experiment Platform.\n\nThis experiment has two parts. Each part includes three separate sessions. In each session, you'll complete 10 rounds. Therefore, you will play an auction game over 6 sessions, totaling 60 rounds. Each round is expected to take about 1 minute or less. Overall, the experiment should take no more than 75 minutes, including review of instructions.\n\nParticipating in this experiment will earn you 100 POINTS.\n\nYou can earn extra points in each round, and these points are mostly affected by your choices and those of your opponents. Points earned in each round and session will be added up. Therefore, each round matters, and it's important to make the most of each one.\n\nThe instructions for each session will appear on the computer screen before you start each session.\n"
 
-This experiment has two parts. Each part includes three separate sessions. In each session, you'll complete 10 rounds. Therefore, you will play an auction game over 6 sessions, totaling 60 rounds. Each round is expected to take about 1 minute or less. Overall, the experiment should take no more than 75 minutes, including review of instructions.
-
-Participating in this experiment will earn you 100 POINTS.
-
-You can earn extra points in each round, and these points are mostly affected by your choices and those of your opponents. Points earned in each round and session will be added up. Therefore, each round matters, and it's important to make the most of each one.
-
-The instructions for each session will appear on the computer screen before you start each session.
-"""
-
+# Concise session headers remain; general instructions are verbatim above.
 SESSION_1 = "<strong>SESSION 1: FIRST-PRICE SEALED BID AUCTION</strong>\nYou are <strong>randomly paired</strong> with a new opponent each round."
 SESSION_2 = "<strong>SESSION 2: REPEATED FIRST-PRICE SEALED BID AUCTION</strong>\nYou play the <strong>same opponent</strong> for all 10 rounds (fixed pairing)."
 SESSION_3 = "<strong>SESSION 3: REPEATED FIRST-PRICE WITH COMMUNICATION</strong>\nSame as Session 2, but <strong>chat is enabled</strong> before bidding."
@@ -54,6 +46,8 @@ class Chat(Page):
         if not txt: return
         entry = {"p": player.id_in_group, "text": txt}
         return {0: dict(msg=entry)}
+    def vars_for_template(self):
+        return dict(my_valuation=self.player.valuation)
 
 class BidPage(Page):
     form_model = "player"
@@ -89,11 +83,14 @@ class SessionSummary(Page):
                         valuation=float(p.valuation or 0),
                         bid=float(p.bid or 0),
                         price=float(p.winning_price or 0),
+                        payoff=float(p.payoff or 0),
                     ))
+        # (1) Group avg bid vs valuation
         bins = defaultdict(list)
         for rr in rows: bins[int(rr["valuation"])].append(rr["bid"])
         s1 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(bins.items()) if v]
 
+        # (2) Individual avg bid vs valuation
         indiv = {}
         for rr in rows:
             pid = rr["pid"]
@@ -104,19 +101,21 @@ class SessionSummary(Page):
             pts = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(mp.items())]
             indiv_series.append(dict(pid=pid, points=pts))
 
+        # (3) Group avg revenue (winning price) by within-session round
         rev = defaultdict(list)
         for rr in rows: rev[rr["round"] - (start-1)].append(rr["price"])
         s3 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(rev.items()) if v]
 
+        # (4) Your average payoff (this session)
         my_pid = self.player.participant.code
-        my_prices = [rr["price"] for rr in rows if rr["pid"] == my_pid]
-        overall_rev_str = f"{(sum(my_prices)/len(my_prices) if my_prices else 0):.2f}"
+        my_payoffs = [rr["payoff"] for rr in rows if rr["pid"] == my_pid]
+        my_avg_payoff_str = f"{(sum(my_payoffs)/len(my_payoffs) if my_payoffs else 0):.2f}"
 
         return dict(
             avg_bid_by_val=json.dumps(s1),
             indiv_series=json.dumps(indiv_series),
             rev_by_round=json.dumps(s3),
-            overall_rev_str=overall_rev_str,
+            my_avg_payoff_str=my_avg_payoff_str,
             phase_label=current_phase(subs)["label"],
         )
 

@@ -68,7 +68,7 @@ class Group(BaseGroup):
             winner, loser = _r.choice([(p1,p2),(p2,p1)])
             price = b1 if self.subsession.auction_format == "first" else b2
 
-        # If highest bid came from a default/timeout bid -> both zero
+        # Highest bid came from default/timeout -> both zero
         def raw_bid(pl):
             try:
                 return pl.bid
