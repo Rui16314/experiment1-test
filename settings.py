@@ -4,14 +4,6 @@ from os import environ
 SESSION_CONFIGS = [
 
     dict(
-        name="all_in_one",
-        display_name="All-in-One: 6 Sessions in One Link",
-        num_demo_participants=2,
-        app_sequence=["auction_all"],
-    ),
-
-
-    dict(
         name="dashboard_all", display_name="Dashboard: All Sessions (5–8)",
         num_demo_participants=1, app_sequence=["dashboard"],
     ),
