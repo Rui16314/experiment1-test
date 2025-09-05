@@ -59,3 +59,5 @@ ADMIN_PASSWORD = environ.get("OTREE_ADMIN_PASSWORD", "admin")
 DEMO_PAGE_INTRO_HTML = """
 <p>ECON 3310 Auction Experiments</p>
 """
+
+SECRET_KEY = environ.get("OTREE_SECRET_KEY", "CCYuBmuit2mkU6DtmlLR6ku1sSCSHnUweJYsRy751mQ")
