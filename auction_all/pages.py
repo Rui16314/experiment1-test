@@ -100,18 +100,27 @@ class PhaseIntro(Page):
         )
 
 class Chat(Page):
-    live_method = "live_chat"
-    def is_displayed(self):
-        return self.player.subsession.chat_enabled
+    live_method = 'live_chat'
+
+    @staticmethod
+    def vars_for_template(player: Player):
+        # use your actual field name here: 'valuation', 'value_points', etc.
+        val = getattr(player, 'valuation', None)
+        if val is None:
+            val = player.participant.vars.get('valuation')
+        text = '' if val in (None, '') else f'{val} POINTS'
+        return dict(my_value=text)
+
     @staticmethod
     def live_chat(player: Player, data):
-        txt = (data or {}).get("text","").strip()
-        if not txt:
+        text = (data or {}).get('text', '').strip()
+        if not text:
             return
-        entry = {"p": player.id_in_group, "text": txt}
-        return {0: dict(msg=entry), player.id_in_group: dict(msg=entry)}
-    def vars_for_template(self):
-        return dict(my_valuation=self.player.valuation)
+        # broadcast to both players; also send a "me" copy so your own line is marked
+        payload_all = dict(sender=player.id_in_group, text=text, me=False)
+        payload_me  = dict(sender=player.id_in_group, text=text, me=True)
+        return {0: payload_all, player.id_in_group: payload_me}
+
 
 class BidPage(Page):
     form_model = "player"
