@@ -6,11 +6,22 @@
 <script type="application/json" id="data_indiv">{{ indiv_series|safe }}</script>
 <script type="application/json" id="data_c3">{{ rev_by_round|safe }}</script>
 
-<div class="chart-box" id="box1"><h5>1) Average bid vs valuation (all players)</h5></div>
-<div class="chart-box" id="box2"><h5>2) Individual average bid vs valuation (one chart per student)</h5></div>
-<div class="chart-box" id="box3"><h5>3) Average revenue (winning price) by round</h5></div>
+<div class="box" id="box1">
+  <h5>1) Average bid vs valuation (all players)</h5>
+  <div class="chart-wrap h-md"><canvas id="c1"></canvas></div>
+</div>
 
-<div class="chart-box">
+<div class="box" id="box2">
+  <h5>2) Individual average bid vs valuation (one chart per student)</h5>
+  <div id="indiv"></div>
+</div>
+
+<div class="box" id="box3">
+  <h5>3) Average revenue (winning price) by round</h5>
+  <div class="chart-wrap h-md"><canvas id="c3"></canvas></div>
+</div>
+
+<div class="box">
   <h5>4) Your average payoff (this session)</h5>
   <div class="display-6">{{ my_avg_payoff_str }}</div>
 </div>
@@ -22,38 +33,35 @@
   {{ super }}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    const commonOpts = {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ display:false } },
-      layout:{ padding:{ left:4, right:4, top:2, bottom:2 } }
-    };
-    function parseJSON(id){ try{ return JSON.parse(document.getElementById(id).textContent || '[]'); }catch(e){ return []; } }
-    function addCanvas(containerId, sizeClass){ const box=document.getElementById(containerId); const c=document.createElement('canvas'); c.className=sizeClass; box.appendChild(c); return c; }
-
-    const s1=parseJSON('data_c1');
-    if(Array.isArray(s1)&&s1.length){
-      const c1=addCanvas('box1','chart-md');
-      new Chart(c1,{type:'line',data:{datasets:[{data:s1, parsing:false, pointRadius:2, tension:0}]},
-        options:{...commonOpts, scales:{x:{type:'linear',title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Avg Bid'}}}}});
-    } else { document.getElementById('box1').insertAdjacentHTML('beforeend','<div class="text-muted small">No data</div>'); }
-
-    const indiv=parseJSON('data_indiv');
-    if(Array.isArray(indiv)&&indiv.length){
-      const wrap=document.getElementById('box2');
-      indiv.forEach(series=>{
-        const holder=document.createElement('div'); holder.style.marginTop='8px';
-        const label=document.createElement('div'); label.innerHTML='<strong>Participant '+series.pid+'</strong>'; holder.appendChild(label);
-        const c=document.createElement('canvas'); c.className='chart-sm'; holder.appendChild(c); wrap.appendChild(holder);
-        new Chart(c,{type:'line',data:{datasets:[{data:series.points, parsing:false, pointRadius:2, tension:0}]},
-          options:{...commonOpts, scales:{x:{type:'linear',title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Avg Bid'}}}}});
+    const opts = { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} };
+    function J(id){ try{ return JSON.parse(document.getElementById(id).textContent||'[]'); }catch(e){ return []; } }
+    // (1)
+    const s1 = J('data_c1');
+    if (Array.isArray(s1) && s1.length){
+      new Chart(document.getElementById('c1'),{ type:'line',
+        data:{datasets:[{data:s1, parsing:false, pointRadius:2, tension:0}]},
+        options:{...opts, scales:{x:{type:'linear', title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Avg Bid'}}}}
       });
-    } else { document.getElementById('box2').insertAdjacentHTML('beforeend','<div class="text-muted small">No data</div>'); }
-
-    const s3=parseJSON('data_c3');
-    if(Array.isArray(s3)&&s3.length){
-      const c3=addCanvas('box3','chart-md');
-      new Chart(c3,{type:'line',data:{datasets:[{data:s3, parsing:false, pointRadius:2, tension:0}]},
-        options:{...commonOpts, scales:{x:{type:'linear',title:{display:true,text:'Round'}}, y:{title:{display:true,text:'Revenue'}}}}});
+    } else { document.getElementById('box1').insertAdjacentHTML('beforeend','<div class="text-muted small">No data</div>'); }
+    // (2) individual
+    const indiv = J('data_indiv');
+    const container = document.getElementById('indiv');
+    if (Array.isArray(indiv) && indiv.length){
+      indiv.forEach(series=>{
+        const block=document.createElement('div'); block.className='chart-wrap h-sm'; block.style.marginTop='8px';
+        const title=document.createElement('div'); title.innerHTML='<strong>Participant '+series.pid+'</strong>'; container.appendChild(title);
+        const canvas=document.createElement('canvas'); block.appendChild(canvas); container.appendChild(block);
+        new Chart(canvas,{type:'line', data:{datasets:[{data:series.points, parsing:false, pointRadius:2, tension:0}]},
+          options:{...opts, scales:{x:{type:'linear', title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Avg Bid'}}}}});
+      });
+    } else { container.insertAdjacentHTML('beforeend','<div class="text-muted small">No data</div>'); }
+    // (3)
+    const s3 = J('data_c3');
+    if (Array.isArray(s3) && s3.length){
+      new Chart(document.getElementById('c3'),{ type:'line',
+        data:{datasets:[{data:s3, parsing:false, pointRadius:2, tension:0}]},
+        options:{...opts, scales:{x:{type:'linear', title:{display:true,text:'Round'}}, y:{title:{display:true,text:'Revenue'}}}}
+      });
     } else { document.getElementById('box3').insertAdjacentHTML('beforeend','<div class="text-muted small">No data</div>'); }
   </script>
 {% endblock %}

@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Experiment</title>
     <style>
-      :root{ --chart-max: 560px; } /* make charts narrower */
-      body{ font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 18px; }
-      .chart-box{ position:relative; margin:12px auto; padding:10px; border:1px solid #eee; border-radius:10px; max-width:var(--chart-max); }
-      .chart-sm{ width:100%; height:160px; display:block; }
-      .chart-md{ width:100%; height:200px; display:block; }
-      .chart-lg{ width:100%; height:260px; display:block; }
-      .grid-2{ display:grid; grid-template-columns:1fr; gap:12px; max-width:var(--chart-max); margin:0 auto; } /* always 1 column */
+      :root{ --chart-max: 520px; }
+      body{ font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin:18px; }
+      .box{ position:relative; margin:12px auto; padding:10px; border:1px solid #eee; border-radius:10px; max-width:var(--chart-max); background:#fff; }
+      /* WRAPPER sizes: Chart.js reads parent box size when maintainAspectRatio=false */
+      .chart-wrap{ position:relative; width:100%; }
+      .h-xs{ height:140px; }
+      .h-sm{ height:170px; }
+      .h-md{ height:200px; }
+      .h-lg{ height:240px; }
+      .chart-wrap > canvas{ position:absolute; inset:0; width:100% !important; height:100% !important; }
     </style>
   </head>
   <body>
