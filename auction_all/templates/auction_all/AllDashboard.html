@@ -10,24 +10,18 @@
 <script type="application/json" id="pie_json">{{ pie|safe }}</script>
 
 <h4 class="mt-4">5) Average bid vs valuation</h4>
-<div class="row" id="s1_rows"></div>
+<div class="grid-2" id="rows_s1"></div>
 
 <h4 class="mt-4">6) Average revenue by round</h4>
-<div class="row" id="s3_rows"></div>
+<div class="grid-2" id="rows_s3"></div>
 
 <h4 class="mt-4">7) Overall average revenue comparison</h4>
-<canvas id="bar_overall"></canvas>
+<div class="chart-box"><canvas id="bar_overall" class="chart-md"></canvas></div>
 
 <h4 class="mt-4">8) Bonus summaries</h4>
-<div class="row">
-  <div class="col-md-6">
-    <h6>Bid vs Valuation (pooled scatter)</h6>
-    <canvas id="scatter"></canvas>
-  </div>
-  <div class="col-md-6">
-    <h6>Share: over / under / equal bids</h6>
-    <canvas id="pie"></canvas>
-  </div>
+<div class="grid-2">
+  <div class="chart-box"><canvas id="scatter" class="chart-md"></canvas></div>
+  <div class="chart-box"><canvas id="pie" class="chart-md"></canvas></div>
 </div>
 
 <form method="post" class="mt-4"><button class="btn btn-primary">Finish</button></form>
@@ -37,58 +31,45 @@
   {{ super }}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    function J(id){ try{ return JSON.parse(document.getElementById(id).textContent||'{}'); }catch(e){ return {}; } }
-    const series1 = J('series1_json');
-    const series3 = J('series3_json');
-    const bar = J('bar_json');
-    const pooled = J('pooled_json');
-    const pie = J('pie_json');
+    function J(id){ try{ return JSON.parse(document.getElementById(id).textContent || '{}'); }catch(e){ return {}; } }
+    const s1 = J('series1_json'), s3 = J('series3_json'), bar = J('bar_json'), pooled = J('pooled_json'), pie = J('pie_json');
 
-    function addLineRow(containerId, label, id){
-      const row=document.getElementById(containerId);
-      const col=document.createElement('div'); col.className='col-md-6';
-      col.innerHTML='<div class="chart-box"><h6>'+label+'</h6><canvas id="'+id+'"></canvas></div>';
-      row.appendChild(col);
-    }
-    function drawLine(id,label,data,xTitle,yTitle){
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (data && data.length){
-        new Chart(el, { type:'line',
-          data:{datasets:[{label, data, parsing:false, pointRadius:2, tension:0}]},
-          options:{maintainAspectRatio:false, scales:{x:{type:'linear', title:{display:true,text:xTitle}}, y:{title:{display:true,text:yTitle}}}}
-        });
-      } else {
-        el.insertAdjacentHTML('afterend','<div class="text-muted small">No data</div>');
-      }
+    function panel(containerId, title){
+      const grid=document.getElementById(containerId);
+      const cell=document.createElement('div');
+      const box=document.createElement('div'); box.className='chart-box';
+      const h=document.createElement('h6'); h.textContent=title;
+      const c=document.createElement('canvas'); c.className='chart-sm';
+      box.appendChild(h); box.appendChild(c); cell.appendChild(box); grid.appendChild(cell);
+      return c;
     }
 
-    let i=1;
-    Object.keys(series1).forEach(lbl=>{ const id='s1_'+(i++); addLineRow('s1_rows', lbl, id); drawLine(id,lbl,series1[lbl],'Valuation','Avg bid'); });
-    i=1;
-    Object.keys(series3).forEach(lbl=>{ const id='s3_'+(i++); addLineRow('s3_rows', lbl, id); drawLine(id,lbl,series3[lbl],'Round','Avg revenue'); });
+    Object.keys(s1||{}).forEach(lbl=>{
+      const c=panel('rows_s1', lbl);
+      new Chart(c,{type:'line',data:{datasets:[{label:'Avg bid', data:s1[lbl]||[], parsing:false, pointRadius:2, tension:0}]},
+        options:{responsive:true, maintainAspectRatio:false, scales:{x:{type:'linear',title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Avg bid'}}}}});
+    });
+    Object.keys(s3||{}).forEach(lbl=>{
+      const c=panel('rows_s3', lbl);
+      new Chart(c,{type:'line',data:{datasets:[{label:'Avg revenue', data:s3[lbl]||[], parsing:false, pointRadius:2, tension:0}]},
+        options:{responsive:true, maintainAspectRatio:false, scales:{x:{type:'linear',title:{display:true,text:'Round'}}, y:{title:{display:true,text:'Revenue'}}}}});
+    });
 
-    if (Array.isArray(bar) && bar.length){
+    if(Array.isArray(bar)&&bar.length){
       new Chart(document.getElementById('bar_overall'),{
         type:'bar',
         data:{labels:bar.map(x=>x.label), datasets:[{label:'Overall avg revenue', data:bar.map(x=>x.value)}]},
-        options:{scales:{y:{title:{display:true,text:'Revenue'}}}}
+        options:{responsive:true, maintainAspectRatio:false, scales:{y:{title:{display:true,text:'Revenue'}}}}
       });
     }
 
-    if (Array.isArray(pooled) && pooled.length){
-      new Chart(document.getElementById('scatter'),{
-        type:'scatter',
-        data:{datasets:[{label:'Bids vs Valuations', data:pooled, parsing:false}]},
-        options:{maintainAspectRatio:false, scales:{x:{type:'linear', title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Bid'}}}}
-      });
+    if(Array.isArray(pooled)&&pooled.length){
+      new Chart(document.getElementById('scatter'), {type:'scatter', data:{datasets:[{label:'Bids vs Valuations', data:pooled, parsing:false}]},
+        options:{responsive:true, maintainAspectRatio:false, scales:{x:{type:'linear',title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Bid'}}}}});
     }
-
-    if (Array.isArray(pie) && pie.length){
-      new Chart(document.getElementById('pie'),{
-        type:'pie',
-        data:{labels:pie.map(p=>p.label), datasets:[{data:pie.map(p=>p.value)}]}
-      });
+    if(Array.isArray(pie)&&pie.length){
+      new Chart(document.getElementById('pie'), {type:'pie', data:{labels:pie.map(p=>p.label), datasets:[{data:pie.map(p=>p.value)}]},
+        options:{responsive:true, maintainAspectRatio:false}});
     }
   </script>
 {% endblock %}
