@@ -99,12 +99,15 @@ class PhaseIntro(Page):
             phase_label=phase["label"],
         )
 
+
+
 class Chat(Page):
+    # Enable oTree Live (websocket)
     live_method = 'live_chat'
 
     @staticmethod
     def vars_for_template(player: Player):
-        # use your actual field name here: 'valuation', 'value_points', etc.
+        # Use your actual field name for valuation ('valuation', 'value_points', etc.)
         val = getattr(player, 'valuation', None)
         if val is None:
             val = player.participant.vars.get('valuation')
@@ -116,10 +119,11 @@ class Chat(Page):
         text = (data or {}).get('text', '').strip()
         if not text:
             return
-        # broadcast to both players; also send a "me" copy so your own line is marked
+        # broadcast to both players; also send a "me" copy to the sender
         payload_all = dict(sender=player.id_in_group, text=text, me=False)
         payload_me  = dict(sender=player.id_in_group, text=text, me=True)
         return {0: payload_all, player.id_in_group: payload_me}
+
 
 
 class BidPage(Page):
