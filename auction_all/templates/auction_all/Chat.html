@@ -2,17 +2,13 @@
 
 {% block content %}
 <h3>Chat with your opponent</h3>
-<p>Your valuation this round: <strong>{{ my_value }}</strong></p>
+<p>Your valuation this round: <strong>{{ my_value|default:'' }}</strong></p>
 
 <div id="chat" class="chatbox"></div>
 
-<div class="row" style="max-width:520px;margin:8px 0;">
-  <div class="col-9" style="display:inline-block;width:75%;">
-    <input id="msg" type="text" class="form-control" placeholder="Type a message..." autocomplete="off">
-  </div>
-  <div class="col-3" style="display:inline-block;width:23%;">
-    <button id="send" type="button" class="btn btn-secondary btn-sm" style="width:100%;">Send</button>
-  </div>
+<div style="max-width:520px;margin:8px 0;display:flex;gap:8px;">
+  <input id="msg" type="text" class="form-control" placeholder="Type a message..." autocomplete="off" style="flex:1;">
+  <button id="send" type="button" class="btn btn-secondary btn-sm">Send</button>
 </div>
 
 <form method="post">
@@ -39,14 +35,11 @@
   });
   inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('send').click(); }});
 
-  // Append helper
   function addLine(sender, text, me=false){
     const d = document.createElement('div'); d.className='chat-msg';
     d.innerHTML = (me ? '<span class="chat-me">Me:</span> ' : ('P'+sender+': ')) + text;
     log.appendChild(d); log.scrollTop = log.scrollHeight;
   }
-
-  // Receive messages from server
   function liveRecv(payload){
     if(Array.isArray(payload)){ payload.forEach(p => addLine(p.sender, p.text, p.me)); }
     else if(payload && payload.text){ addLine(payload.sender, payload.text, payload.me); }
