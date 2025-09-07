@@ -1,7 +1,7 @@
 {% extends 'auction_all/Base.html' %}
 {% block content %}
-<h2>All Sessions Dashboard (5–8)</h2>
-<p class="text-muted">Aggregated across all six sessions.</p>
+<h2 style="max-width:var(--chart-max);margin:0 auto;">All Sessions Dashboard (5–8)</h2>
+<p class="text-muted" style="max-width:var(--chart-max);margin:0 auto 8px;">Aggregated across all six sessions.</p>
 
 <script type="application/json" id="series1_json">{{ series1|safe }}</script>
 <script type="application/json" id="series3_json">{{ series3|safe }}</script>
@@ -9,66 +9,64 @@
 <script type="application/json" id="pooled_json">{{ pooled_points|safe }}</script>
 <script type="application/json" id="pie_json">{{ pie|safe }}</script>
 
-<h4 class="mt-4">5) Average bid vs valuation</h4>
+<h4>5) Average bid vs valuation</h4>
 <div class="grid-2" id="rows_s1"></div>
 
-<h4 class="mt-4">6) Average revenue by round</h4>
+<h4>6) Average revenue by round</h4>
 <div class="grid-2" id="rows_s3"></div>
 
-<h4 class="mt-4">7) Overall average revenue comparison</h4>
+<h4>7) Overall average revenue comparison</h4>
 <div class="chart-box"><canvas id="bar_overall" class="chart-md"></canvas></div>
 
-<h4 class="mt-4">8) Bonus summaries</h4>
+<h4>8) Bonus summaries</h4>
 <div class="grid-2">
   <div class="chart-box"><canvas id="scatter" class="chart-md"></canvas></div>
   <div class="chart-box"><canvas id="pie" class="chart-md"></canvas></div>
 </div>
 
-<form method="post" class="mt-4"><button class="btn btn-primary">Finish</button></form>
+<form method="post" class="mt-3"><button class="btn btn-primary">Finish</button></form>
 {% endblock %}
 
 {% block scripts %}
   {{ super }}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
+    const commonOpts={ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, layout:{padding:{left:4,right:4,top:2,bottom:2}} };
     function J(id){ try{ return JSON.parse(document.getElementById(id).textContent || '{}'); }catch(e){ return {}; } }
-    const s1 = J('series1_json'), s3 = J('series3_json'), bar = J('bar_json'), pooled = J('pooled_json'), pie = J('pie_json');
+    const s1=J('series1_json'), s3=J('series3_json'), bar=J('bar_json'), pooled=J('pooled_json'), pie=J('pie_json');
 
-    function panel(containerId, title){
+    function panel(containerId,title){
       const grid=document.getElementById(containerId);
-      const cell=document.createElement('div');
       const box=document.createElement('div'); box.className='chart-box';
       const h=document.createElement('h6'); h.textContent=title;
       const c=document.createElement('canvas'); c.className='chart-sm';
-      box.appendChild(h); box.appendChild(c); cell.appendChild(box); grid.appendChild(cell);
-      return c;
+      box.appendChild(h); box.appendChild(c); grid.appendChild(box); return c;
     }
 
     Object.keys(s1||{}).forEach(lbl=>{
       const c=panel('rows_s1', lbl);
-      new Chart(c,{type:'line',data:{datasets:[{label:'Avg bid', data:s1[lbl]||[], parsing:false, pointRadius:2, tension:0}]},
-        options:{responsive:true, maintainAspectRatio:false, scales:{x:{type:'linear',title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Avg bid'}}}}});
+      new Chart(c,{type:'line',data:{datasets:[{data:s1[lbl]||[], parsing:false, pointRadius:2, tension:0}]},
+        options:{...commonOpts, scales:{x:{type:'linear',title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Avg bid'}}}}});
     });
+
     Object.keys(s3||{}).forEach(lbl=>{
       const c=panel('rows_s3', lbl);
-      new Chart(c,{type:'line',data:{datasets:[{label:'Avg revenue', data:s3[lbl]||[], parsing:false, pointRadius:2, tension:0}]},
-        options:{responsive:true, maintainAspectRatio:false, scales:{x:{type:'linear',title:{display:true,text:'Round'}}, y:{title:{display:true,text:'Revenue'}}}}});
+      new Chart(c,{type:'line',data:{datasets:[{data:s3[lbl]||[], parsing:false, pointRadius:2, tension:0}]},
+        options:{...commonOpts, scales:{x:{type:'linear',title:{display:true,text:'Round'}}, y:{title:{display:true,text:'Revenue'}}}}});
     });
 
     if(Array.isArray(bar)&&bar.length){
       new Chart(document.getElementById('bar_overall'),{
-        type:'bar',
-        data:{labels:bar.map(x=>x.label), datasets:[{label:'Overall avg revenue', data:bar.map(x=>x.value)}]},
-        options:{responsive:true, maintainAspectRatio:false, scales:{y:{title:{display:true,text:'Revenue'}}}}
+        type:'bar', data:{labels:bar.map(x=>x.label), datasets:[{data:bar.map(x=>x.value)}]},
+        options:{...commonOpts, scales:{y:{title:{display:true,text:'Revenue'}}}}
       });
     }
-
     if(Array.isArray(pooled)&&pooled.length){
-      new Chart(document.getElementById('scatter'), {type:'scatter', data:{datasets:[{label:'Bids vs Valuations', data:pooled, parsing:false}]},
-        options:{responsive:true, maintainAspectRatio:false, scales:{x:{type:'linear',title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Bid'}}}}});
+      new Chart(document.getElementById('scatter'),{type:'scatter', data:{datasets:[{data:pooled, parsing:false}]},
+        options:{...commonOpts, scales:{x:{type:'linear',title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Bid'}}}}});
     }
     if(Array.isArray(pie)&&pie.length){
-      new Chart(document.getElementById('pie'), {type:'pie', data:{labels:pie.map(p=>p.label), datasets:[{data:pie.map(p=>p.value)}]},
+      new Chart(document.getElementById('pie'),{type:'pie', data:{labels:pie.map(p=>p.label), datasets:[{data:pie.map(p=>p.value)}]},
         options:{responsive:true, maintainAspectRatio:false}});
     }
   </script>

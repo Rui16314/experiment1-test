@@ -5,14 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Experiment</title>
     <style>
-      :root{ --chart-max: 900px; }
-      body{ font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 20px; }
-      .chart-box{ position:relative; margin:16px auto; padding:12px; border:1px solid #eee; border-radius:12px; max-width:var(--chart-max); }
-      .chart-sm{ width:100%; height:220px; display:block; }
-      .chart-md{ width:100%; height:280px; display:block; }
-      .chart-lg{ width:100%; height:340px; display:block; }
-      .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:var(--chart-max); margin:0 auto; }
-      @media (max-width: 992px){ .grid-2{ grid-template-columns:1fr; } }
+      :root{ --chart-max: 560px; } /* make charts narrower */
+      body{ font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 18px; }
+      .chart-box{ position:relative; margin:12px auto; padding:10px; border:1px solid #eee; border-radius:10px; max-width:var(--chart-max); }
+      .chart-sm{ width:100%; height:160px; display:block; }
+      .chart-md{ width:100%; height:200px; display:block; }
+      .chart-lg{ width:100%; height:260px; display:block; }
+      .grid-2{ display:grid; grid-template-columns:1fr; gap:12px; max-width:var(--chart-max); margin:0 auto; } /* always 1 column */
     </style>
   </head>
   <body>
