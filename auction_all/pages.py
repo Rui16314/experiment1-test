@@ -107,32 +107,40 @@ def phase_from_round(r: int) -> int:
 def phase_from_round(r: int) -> int:
     return ((r - 1) // 10) + 1
 
+from otree.api import *
+
+# 10 rounds per session -> 6 sessions total
+def phase_from_round(r: int) -> int:
+    return ((r - 1) // 10) + 1
+
 class Chat(Page):
-    # Inject oTree Live websocket on this page
+    # WebSocket live page
     live_method = 'live_chat'
 
-    # Only show chat in sessions 3 and 6 (rounds 21–30 and 51–60)
+    # Only show in sessions 3 and 6 (rounds 21–30 and 51–60)
     def is_displayed(self):
         return phase_from_round(self.round_number) in (3, 6)
 
-    # Instance method (uses self.player). Return a NUMERIC value, not a string.
+    # Instance method (self.player). Return a NUMBER only for the valuation.
     def vars_for_template(self):
         p = self.player
-        # ↓ Use YOUR actual field name here if different
+        # TODO: change 'valuation' to YOUR actual field name if different (e.g., value_points)
         val = getattr(p, 'valuation', None)
         if val is None:
             val = p.participant.vars.get('valuation')
-        return dict(val_num=val or '')
+        return dict(
+            val_num=val or '',
+            my_id=p.id_in_group,   # we'll use this client-side to mark "me"
+        )
 
     @staticmethod
     def live_chat(player: Player, data):
         text = (data or {}).get('text', '').strip()
         if not text:
             return
-        payload_all = dict(sender=player.id_in_group, text=text, me=False)
-        payload_me  = dict(sender=player.id_in_group, text=text, me=True)
-        # 0 = everyone on page in the group; also send a “me” copy to sender
-        return {0: payload_all, player.id_in_group: payload_me}
+        # Version-proof: send ONE broadcast; clients decide who "me" is.
+        payload = dict(sender=player.id_in_group, text=text)
+        return {0: payload}  # 0 = everyone on this page in the group
 
 class BidPage(Page):
     form_model = "player"
