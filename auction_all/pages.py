@@ -103,38 +103,32 @@ class PhaseIntro(Page):
 
 
 def phase_from_round(r: int) -> int:
-    # 10 rounds per session → sessions 1..6
+    # 10 rounds per phase, 6 total
     return ((r - 1) // 10) + 1
 
 class Chat(Page):
+    # Tell the page to use Player.live_chat
     live_method = 'live_chat'
 
-    # show ONLY in sessions 3 and 6
+    # Show ONLY when chat is enabled (your Subsession already sets this)
     def is_displayed(self):
-        return phase_from_round(self.round_number) in (3, 6)
+        # You can use either the computed phase or the flag:
+        # return phase_from_round(self.round_number) in (3, 6)
+        return self.subsession.chat_enabled  # ← simplest with your model
 
-    # give template a NUMBER (no “POINTS” string here)
     def vars_for_template(self):
-        p = self.player
-        val = getattr(p, 'valuation', None)  # <-- put your real field name here if different
-        if val is None:
-            val = p.participant.vars.get('valuation')
-        return dict(val_num=val or '')
+        # Send a NUMBER to the template; do NOT append the word “POINTS” here
+        v = self.player.valuation
+        try:
+            val_num = int(v) if v is not None else ''
+        except Exception:
+            val_num = float(v) if v is not None else ''
+        return dict(val_num=val_num)
 
-    # pass my id to JS so client can mark my own messages
+    # Let JS know who "me" is so it can label my own lines
     def js_vars(self):
         return dict(me=self.player.id_in_group)
-
-    @staticmethod
-    def live_chat(player: Player, data):
-        text = (data or {}).get('text', '').strip()
-        if not text:
-            return
-        # broadcast ONE event to everyone on this live page
-        msg = dict(sender=player.id_in_group, text=text)
-        return {0: msg}
-
-
+        
 class BidPage(Page):
     form_model = "player"
     form_fields = ["bid"]
