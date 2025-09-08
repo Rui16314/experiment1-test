@@ -105,6 +105,17 @@ class Player(BasePlayer):
             return b
         v = self.valuation or cu(0)
         if self.subsession.auction_format == "first":
-            return v/2
+            return v / 2
         else:
             return v
+
+    # ✅ oTree Live handler lives here (NOT on the Page)
+    def live_chat(self, data):
+        """
+        Called when the browser runs liveSend({...}) on the Chat page.
+        Broadcast one payload to everyone on this live page.
+        """
+        text = (data or {}).get('text', '').strip()
+        if not text:
+            return
+        return {0: dict(sender=self.id_in_group, text=text)}
