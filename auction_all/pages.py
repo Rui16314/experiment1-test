@@ -104,32 +104,34 @@ class PhaseIntro(Page):
 def phase_from_round(r: int) -> int:
     return ((r - 1) // 10) + 1
 
+def phase_from_round(r: int) -> int:
+    return ((r - 1) // 10) + 1
+
 class Chat(Page):
-    # 1) Make it LIVE so liveSend/liveRecv are injected
+    # Inject oTree Live websocket on this page
     live_method = 'live_chat'
 
-    # 2) Only show in sessions 3 and 6 (i.e., rounds 21–30 and 51–60)
+    # Only show chat in sessions 3 and 6 (rounds 21–30 and 51–60)
     def is_displayed(self):
         return phase_from_round(self.round_number) in (3, 6)
 
-    # 3) Provide a numeric valuation. No decorators; instance method.
+    # Instance method (uses self.player). Return a NUMERIC value, not a string.
     def vars_for_template(self):
         p = self.player
-        # ⬇️ use your actual field name here if different (e.g., value_points/private_value)
+        # ↓ Use YOUR actual field name here if different
         val = getattr(p, 'valuation', None)
         if val is None:
             val = p.participant.vars.get('valuation')
         return dict(val_num=val or '')
 
-    # 4) LIVE handler (static method signature is correct for oTree)
     @staticmethod
     def live_chat(player: Player, data):
         text = (data or {}).get('text', '').strip()
         if not text:
             return
-        # broadcast to both players; also send a 'me' copy
         payload_all = dict(sender=player.id_in_group, text=text, me=False)
         payload_me  = dict(sender=player.id_in_group, text=text, me=True)
+        # 0 = everyone on page in the group; also send a “me” copy to sender
         return {0: payload_all, player.id_in_group: payload_me}
 
 class BidPage(Page):
