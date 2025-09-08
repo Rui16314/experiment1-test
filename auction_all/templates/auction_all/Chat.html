@@ -1,4 +1,4 @@
-{% extends 'auction_all/Base.html' %}
+{% extends 'global/Page.html' %}
 
 {% block content %}
 <h3>Chat with your opponent</h3>
@@ -24,7 +24,7 @@
 <script>
   const log=document.getElementById('chat'), inp=document.getElementById('msg'), btn=document.getElementById('send');
 
-  // Warn loudly if liveSend is unavailable → means page is not a live page
+  // Visible warning if page is not live (should disappear once fixed)
   if (typeof liveSend === 'undefined') {
     const warn=document.createElement('div');
     warn.style.color='#b91c1c';
@@ -39,8 +39,6 @@
     d.textContent=(me?'Me: ':'P'+sender+': ')+text;
     log.appendChild(d); log.scrollTop=log.scrollHeight;
   }
-
-  // Receive messages from server
   function liveRecv(payload){
     if (Array.isArray(payload)) payload.forEach(p=>addLine(p.sender,p.text,p.me));
     else if (payload && payload.text) addLine(payload.sender,payload.text,payload.me);
