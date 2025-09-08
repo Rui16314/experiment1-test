@@ -15,47 +15,36 @@
 {% endblock %}
 
 {% block scripts %}
-{{ super }}
+{{ super() }}
 <style>
   .chatbox{ max-width:520px; height:180px; border:1px solid #e5e7eb; border-radius:8px; padding:8px; overflow-y:auto; background:#fff; }
   .chat-msg{ margin:4px 0; }
   .chat-msg.me{ font-weight:600; }
 </style>
 <script>
-  const MY_ID = {{ my_id }};             // provided by vars_for_template
-  const log   = document.getElementById('chat');
-  const inp   = document.getElementById('msg');
-  const btn   = document.getElementById('send');
+  const log=document.getElementById('chat'), inp=document.getElementById('msg'), btn=document.getElementById('send');
 
-  if (typeof liveSend === 'undefined') {
-    const warn=document.createElement('div');
-    warn.style.color='#b91c1c'; warn.style.margin='8px 0';
-    warn.textContent='⚠️ liveSend is undefined; this page is not LIVE (check live_method).';
-    log.appendChild(warn);
+  function addLine(sender,text,me){
+    const d=document.createElement('div');
+    d.className='chat-msg'+(me?' me':'');
+    d.textContent=(me?'Me: ':'P'+sender+': ')+text;
+    log.appendChild(d); log.scrollTop=log.scrollHeight;
   }
 
-  function addLine(sender, text){
-    const me = (sender === MY_ID);
-    const d = document.createElement('div');
-    d.className = 'chat-msg' + (me ? ' me' : '');
-    d.textContent = (me ? 'Me: ' : ('P'+sender+': ')) + text;
-    log.appendChild(d); log.scrollTop = log.scrollHeight;
-  }
-
-  // Receive messages from server (sent once to everyone)
+  // Receive from server (oTree calls this)
   function liveRecv(payload){
-    if (Array.isArray(payload)) { payload.forEach(p => addLine(p.sender, p.text)); }
-    else if (payload && payload.text) { addLine(payload.sender, payload.text); }
+    if(Array.isArray(payload)){ payload.forEach(p=>addLine(p.sender,p.text,p.sender===jsVars.me)); }
+    else if(payload && payload.text){ addLine(payload.sender,payload.text,payload.sender===jsVars.me); }
   }
 
+  // Send (and optimistically show my line)
   btn.addEventListener('click', ()=>{
-    const t = (inp.value || '').trim();
-    if (!t || typeof liveSend === 'undefined') return;
-    liveSend({text: t});         // does NOT submit the page
-    inp.value = ''; inp.focus();
+    const t=(inp.value||'').trim();
+    if(!t) return;
+    addLine(jsVars.me, t, true);   // instant feedback
+    if(typeof liveSend==='function') liveSend({text:t});
+    inp.value=''; inp.focus();
   });
-  inp.addEventListener('keydown', e=>{
-    if (e.key === 'Enter') { e.preventDefault(); btn.click(); }
-  });
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); btn.click(); }});
 </script>
 {% endblock %}
