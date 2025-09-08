@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
+{{ block.super }}
 <style>
   .chatbox{ max-width:520px; height:180px; border:1px solid #e5e7eb; border-radius:8px; padding:8px; overflow-y:auto; background:#fff; }
   .chat-msg{ margin:4px 0; }
@@ -31,20 +31,21 @@
     log.appendChild(d); log.scrollTop=log.scrollHeight;
   }
 
-  // Receive from server (oTree calls this)
+  // oTree calls this when a message arrives from the server
   function liveRecv(payload){
-    if(Array.isArray(payload)){ payload.forEach(p=>addLine(p.sender,p.text,p.sender===jsVars.me)); }
-    else if(payload && payload.text){ addLine(payload.sender,payload.text,payload.sender===jsVars.me); }
+    if (Array.isArray(payload)) payload.forEach(p=>addLine(p.sender,p.text,p.sender===jsVars.me));
+    else if (payload && payload.text) addLine(payload.sender,payload.text,payload.sender===jsVars.me);
   }
 
-  // Send (and optimistically show my line)
+  // Send and optimistically show my own line
   btn.addEventListener('click', ()=>{
     const t=(inp.value||'').trim();
     if(!t) return;
-    addLine(jsVars.me, t, true);   // instant feedback
-    if(typeof liveSend==='function') liveSend({text:t});
+    addLine(jsVars.me, t, true);
+    if (typeof liveSend==='function') liveSend({text:t});
     inp.value=''; inp.focus();
   });
   inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); btn.click(); }});
 </script>
 {% endblock %}
+
