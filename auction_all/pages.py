@@ -1,8 +1,9 @@
-
+# pages.py
 from otree.api import *
 from .models import C, Subsession, Group, Player, PHASES, PHASE_SIZE, TOTAL_ROUNDS
 import json
 
+# ---------- Instructions (kept exactly as you provided) ----------
 GENERAL_INSTR = """
 <h3 style="text-align:center;">GENERAL INSTRUCTIONS</h3>
 <p>Welcome to the ECON 3310 Experiment Platform.</p>
@@ -78,6 +79,7 @@ SESSION_TEXT = {
     "sp_comm":   "<h4>SESSION 6</h4><p>(Paste the exact text from your document here.)</p>",
 }
 
+# ---------- helpers ----------
 def _cfloat(x):
     try:
         return float(x)
@@ -87,9 +89,12 @@ def _cfloat(x):
 def current_phase(subsession):
     return PHASES[subsession.phase_index]
 
+# ---------- pages ----------
 class PhaseIntro(Page):
     def is_displayed(self):
+        # show at rounds 1,11,21,31,41,51
         return (self.player.round_number - 1) % PHASE_SIZE == 0
+
     def vars_for_template(self):
         phase = current_phase(self.player.subsession)
         key = phase["key"]
@@ -99,25 +104,15 @@ class PhaseIntro(Page):
             phase_label=phase["label"],
         )
 
-
-
-
-def phase_from_round(r: int) -> int:
-    # 10 rounds per phase, 6 total
-    return ((r - 1) // 10) + 1
-
 class Chat(Page):
-    # Tell the page to use Player.live_chat
+    # calls Player.live_chat in models.py
     live_method = 'live_chat'
 
-    # Show ONLY when chat is enabled (your Subsession already sets this)
     def is_displayed(self):
-        # You can use either the computed phase or the flag:
-        # return phase_from_round(self.round_number) in (3, 6)
-        return self.subsession.chat_enabled  # ← simplest with your model
+        # only in Exp3 & Exp6 (your Subsession sets this flag)
+        return self.subsession.chat_enabled
 
     def vars_for_template(self):
-        # Send a NUMBER to the template; do NOT append the word “POINTS” here
         v = self.player.valuation
         try:
             val_num = int(v) if v is not None else ''
@@ -125,14 +120,33 @@ class Chat(Page):
             val_num = float(v) if v is not None else ''
         return dict(val_num=val_num)
 
-    # Let JS know who "me" is so it can label my own lines
     def js_vars(self):
         return dict(me=self.player.id_in_group)
-        
+
 class BidPage(Page):
     form_model = "player"
     form_fields = ["bid"]
-    timeout_seconds = 60
+    timeout_seconds = 60  # shows timer & auto-advance
+
+    def vars_for_template(self):
+        v = self.player.valuation
+        try:
+            val_num = int(v) if v is not None else ''
+        except Exception:
+            val_num = float(v) if v is not None else ''
+        return dict(val_num=val_num)
+
+    @staticmethod
+    def error_message(player, values):
+        b = values.get('bid')
+        if b is None:
+            return 'Please enter a bid (0–100).'
+        if b < cu(0) or b > cu(100):
+            return 'Bid must be between 0 and 100.'
+
+    def before_next_page(self, timeout_happened):
+        player = self.player
+        player.timed_out = bool(timeout_happened)
 
 class Compute(WaitPage):
     after_all_players_arrive = 'set_winner_and_payoffs'
@@ -140,9 +154,13 @@ class Compute(WaitPage):
 class Results(Page):
     def vars_for_template(self):
         other = self.player.get_others_in_group()[0]
-        def _c(x): 
-            try: return float(x)
-            except TypeError: return 0.0
+
+        def _c(x):
+            try:
+                return float(x)
+            except TypeError:
+                return 0.0
+
         return dict(
             my_v=_c(self.player.valuation),
             my_b=_c(getattr(self.player, "bid", None)),
@@ -155,45 +173,53 @@ class Results(Page):
 class SessionSummary(Page):
     def is_displayed(self):
         return self.player.round_number % PHASE_SIZE == 0
+
     def vars_for_template(self):
         subs = self.player.subsession
         start = subs.phase_index * PHASE_SIZE + 1
         end = start + PHASE_SIZE - 1
+
         rows = []
-        for r in range(start, end+1):
+        for r in range(start, end + 1):
             for g in subs.in_round(r).get_groups():
                 for p in g.get_players():
-                    def _c(x):
-                        try: return float(x)
-                        except TypeError: return 0.0
                     rows.append(dict(
                         round=r, pid=p.participant.code,
-                        valuation=_c(getattr(p, "valuation", None)),
-                        bid=_c(getattr(p, "bid", None)),
-                        price=_c(getattr(p, "winning_price", None)),
-                        payoff=_c(getattr(p, "payoff", None)),
+                        valuation=_cfloat(getattr(p, "valuation", None)),
+                        bid=_cfloat(getattr(p, "bid", None)),
+                        price=_cfloat(getattr(p, "winning_price", None)),
+                        payoff=_cfloat(getattr(p, "payoff", None)),
                     ))
+
+        # 1) Avg bid vs valuation (all players)
         bins = {}
         for rr in rows:
             k = int(rr["valuation"])
             bins.setdefault(k, []).append(rr["bid"])
-        s1 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(bins.items()) if v]
+        s1 = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(bins.items()) if v]
+
+        # 2) Individual avg bid vs valuation (per participant)
         indiv = {}
         for rr in rows:
             pid = rr["pid"]; k = int(rr["valuation"])
             indiv.setdefault(pid, {}).setdefault(k, []).append(rr["bid"])
         indiv_series = []
         for pid, mp in indiv.items():
-            pts = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(mp.items())]
+            pts = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(mp.items())]
             indiv_series.append(dict(pid=pid, points=pts))
+
+        # 3) Average revenue (winning price) by round (phase-local)
         rev = {}
         for rr in rows:
-            k = rr["round"] - (start-1)
+            k = rr["round"] - (start - 1)
             rev.setdefault(k, []).append(rr["price"])
-        s3 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(rev.items()) if v]
+        s3 = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(rev.items()) if v]
+
+        # 4) Your overall average revenue (this session)
         my_pid = self.player.participant.code
         my_payoffs = [rr["payoff"] for rr in rows if rr["pid"] == my_pid]
-        my_avg_payoff_str = f"{(sum(my_payoffs)/len(my_payoffs) if my_payoffs else 0):.2f}"
+        my_avg_payoff_str = f"{(sum(my_payoffs) / len(my_payoffs) if my_payoffs else 0):.2f}"
+
         return dict(
             avg_bid_by_val=json.dumps(s1),
             indiv_series=json.dumps(indiv_series),
@@ -205,52 +231,59 @@ class SessionSummary(Page):
 class AllDashboard(Page):
     def is_displayed(self):
         return self.player.round_number == TOTAL_ROUNDS
+
     def vars_for_template(self):
         all_series1, all_series3, bar, pooled = {}, {}, [], []
         over = under = equal = 0
+
         for idx, phase in enumerate(PHASES):
-            start = idx*PHASE_SIZE + 1; end = start + PHASE_SIZE - 1
+            start = idx * PHASE_SIZE + 1
+            end = start + PHASE_SIZE - 1
             rows = []
-            for r in range(start, end+1):
+
+            for r in range(start, end + 1):
                 subs = self.player.subsession.in_round(r)
                 for g in subs.get_groups():
                     for p in g.get_players():
-                        def _c(x):
-                            try: return float(x)
-                            except TypeError: return 0.0
                         rows.append(dict(
-                            valuation=_c(getattr(p, "valuation", None)),
-                            bid=_c(getattr(p, "bid", None)),
-                            price=_c(getattr(p, "winning_price", None)),
-                            round=r-start+1,
+                            valuation=_cfloat(getattr(p, "valuation", None)),
+                            bid=_cfloat(getattr(p, "bid", None)),
+                            price=_cfloat(getattr(p, "winning_price", None)),
+                            round=r - start + 1,
                         ))
-                        pooled.append({"x": _c(getattr(p, "valuation", None)),
-                                       "y": _c(getattr(p, "bid", None))})
+                        pooled.append({"x": _cfloat(getattr(p, "valuation", None)),
+                                       "y": _cfloat(getattr(p, "bid", None))})
                         if getattr(p, "bid", None) is not None:
-                            b = _c(getattr(p, "bid", None)); v = _c(getattr(p, "valuation", None))
+                            b = _cfloat(getattr(p, "bid", None))
+                            v = _cfloat(getattr(p, "valuation", None))
                             if b > v: over += 1
                             elif b < v: under += 1
                             else: equal += 1
+
             bins = {}
             for rr in rows:
                 k = int(rr["valuation"])
                 bins.setdefault(k, []).append(rr["bid"])
-            s1 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(bins.items()) if v]
+            s1 = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(bins.items()) if v]
             all_series1[phase["label"]] = s1
+
             rev = {}
             for rr in rows:
                 k = int(rr["round"])
                 rev.setdefault(k, []).append(rr["price"])
-            s3 = [{"x":k,"y":sum(v)/len(v)} for k,v in sorted(rev.items()) if v]
+            s3 = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(rev.items()) if v]
             all_series3[phase["label"]] = s3
+
             prices = [rr["price"] for rr in rows]
-            overall = (sum(prices)/len(prices)) if prices else 0
+            overall = (sum(prices) / len(prices)) if prices else 0
             bar.append({"label": phase["label"], "value": overall})
+
         pie = [
-            {"label":"Over-bid (bid > value)", "value": over},
-            {"label":"Under-bid (bid < value)", "value": under},
-            {"label":"Equal (bid = value)", "value": equal},
+            {"label": "Over-bid (bid > value)", "value": over},
+            {"label": "Under-bid (bid < value)", "value": under},
+            {"label": "Equal (bid = value)", "value": equal},
         ]
+
         return dict(
             series1=json.dumps(all_series1),
             series3=json.dumps(all_series3),
@@ -260,4 +293,14 @@ class AllDashboard(Page):
             labels=[ph["label"] for ph in PHASES],
         )
 
-page_sequence = [PhaseIntro, Chat, BidPage, Compute, Results, SessionSummary, AllDashboard]
+# ---------- sequence ----------
+page_sequence = [
+    PhaseIntro,
+    Chat,
+    BidPage,
+    Compute,
+    Results,
+    SessionSummary,
+    AllDashboard,
+]
+
