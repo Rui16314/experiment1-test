@@ -89,6 +89,7 @@ class Group(BaseGroup):
         winner.payoff = (winner.valuation - price)
         loser.payoff = cu(0)
 
+# models.py  (append inside class Player)
 class Player(BasePlayer):
     valuation = models.CurrencyField()
     bid = models.CurrencyField(min=0, max=100, blank=True)
@@ -104,18 +105,12 @@ class Player(BasePlayer):
         if b is not None:
             return b
         v = self.valuation or cu(0)
-        if self.subsession.auction_format == "first":
-            return v / 2
-        else:
-            return v
+        return v/2 if self.subsession.auction_format == "first" else v
 
-    # ✅ oTree Live handler lives here (NOT on the Page)
+    # ✅ LIVE handler must be on Player/Group/Subsession (not Page)
     def live_chat(self, data):
-        """
-        Called when the browser runs liveSend({...}) on the Chat page.
-        Broadcast one payload to everyone on this live page.
-        """
         text = (data or {}).get('text', '').strip()
         if not text:
             return
+        # broadcast one message to everyone on the page
         return {0: dict(sender=self.id_in_group, text=text)}
