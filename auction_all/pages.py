@@ -136,17 +136,21 @@ class BidPage(Page):
             val_num = float(v) if v is not None else ''
         return dict(val_num=val_num)
 
-    @staticmethod
-    def error_message(player, values):
+    # <-- Make this an instance method (not @staticmethod) that accepts 'values'
+    def error_message(self, values):
+        """
+        oTree will call this as self.error_message(values). So signature must be (self, values).
+        Use self.player if you need the player.
+        """
+        player = self.player
         b = values.get('bid')
         if b is None:
             return 'Please enter a bid (0–100).'
+        # b will be a Currency (Decimal/cu) — compare to cu(0)/cu(100)
         if b < cu(0) or b > cu(100):
             return 'Bid must be between 0 and 100.'
+        # optionally check more rules, e.g. integer cents only etc.
 
-    def before_next_page(self, timeout_happened):
-        player = self.player
-        player.timed_out = bool(timeout_happened)
 
 class Compute(WaitPage):
     after_all_players_arrive = 'set_winner_and_payoffs'
