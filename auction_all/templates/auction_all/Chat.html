@@ -15,37 +15,47 @@
 {% endblock %}
 
 {% block scripts %}
-{{ block.super }}
+{{ super() }}
 <style>
   .chatbox{ max-width:520px; height:180px; border:1px solid #e5e7eb; border-radius:8px; padding:8px; overflow-y:auto; background:#fff; }
   .chat-msg{ margin:4px 0; }
   .chat-msg.me{ font-weight:600; }
 </style>
 <script>
-  const log=document.getElementById('chat'), inp=document.getElementById('msg'), btn=document.getElementById('send');
+  const log = document.getElementById('chat');
+  const inp = document.getElementById('msg');
+  const btn = document.getElementById('send');
 
-  function addLine(sender,text,me){
-    const d=document.createElement('div');
-    d.className='chat-msg'+(me?' me':'');
-    d.textContent=(me?'Me: ':'P'+sender+': ')+text;
-    log.appendChild(d); log.scrollTop=log.scrollHeight;
+  function addLine(sender, text, me){
+    const d = document.createElement('div');
+    d.className = 'chat-msg' + (me ? ' me' : '');
+    d.textContent = (me ? 'Me: ' : ('P' + sender + ': ')) + text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
   }
 
-  // Receive from server (oTree calls this)
+  // oTree calls this when messages arrive from the server
   function liveRecv(payload){
-    if (Array.isArray(payload)) payload.forEach(p=>addLine(p.sender,p.text,p.sender===jsVars.me));
-    else if (payload && payload.text) addLine(payload.sender,payload.text,payload.sender===jsVars.me);
+    if (Array.isArray(payload)) {
+      payload.forEach(p => addLine(p.sender, p.text, p.sender === jsVars.me));
+    } else if (payload && payload.text) {
+      addLine(payload.sender, payload.text, payload.sender === jsVars.me);
+    }
   }
 
-  // Send (and optimistically show my own line)
-  btn.addEventListener('click', ()=>{
-    const t=(inp.value||'').trim();
-    if(!t) return;
+  // Send (and show my line immediately)
+  btn.addEventListener('click', () => {
+    const t = (inp.value || '').trim();
+    if (!t) return;
     addLine(jsVars.me, t, true);
-    if (typeof liveSend==='function') liveSend({text:t});
-    inp.value=''; inp.focus();
+    if (typeof liveSend === 'function') liveSend({ text: t });
+    inp.value = '';
+    inp.focus();
   });
-  inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); btn.click(); }});
+
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); btn.click(); }
+  });
 </script>
 {% endblock %}
 
