@@ -1,67 +1,60 @@
-{% extends 'auction_all/Base.html' %}
+{% extends 'global/Page.html' %}
+
 {% block content %}
-<h2 style="max-width:var(--chart-max);margin:0 auto;">Session results — {{ phase_label }}</h2>
+<h2>Session results — {{ phase_label }}</h2>
 
-<script type="application/json" id="data_c1">{{ avg_bid_by_val|safe }}</script>
-<script type="application/json" id="data_indiv">{{ indiv_series|safe }}</script>
-<script type="application/json" id="data_c3">{{ rev_by_round|safe }}</script>
+<div class="card" style="padding:16px; max-width:1000px;">
+  <h4>1) Average bid vs valuation (all players)</h4>
+  <div id="chart1" class="chart-box"></div>
 
-<div class="box" id="box1">
-  <h5>1) Average bid vs valuation (all players)</h5>
-  <div class="chart-wrap h-md"><canvas id="c1"></canvas></div>
+  <h4>2) Individual average bid vs valuation (one chart per student)</h4>
+  <div id="chart2" class="chart-box"></div>
+
+  <h4>3) Average revenue (winning price) by round</h4>
+  <div id="chart3" class="chart-box"></div>
+
+  <h4>4) Your overall average revenue (this session)</h4>
+  <div><strong>{{ my_avg_payoff_str }}</strong></div>
 </div>
 
-<div class="box" id="box2">
-  <h5>2) Individual average bid vs valuation (one chart per student)</h5>
-  <div id="indiv"></div>
-</div>
-
-<div class="box" id="box3">
-  <h5>3) Average revenue (winning price) by round</h5>
-  <div class="chart-wrap h-md"><canvas id="c3"></canvas></div>
-</div>
-
-<div class="box">
-  <h5>4) Your average payoff (this session)</h5>
-  <div class="display-6">{{ my_avg_payoff_str }}</div>
-</div>
-
-<form method="post"><button class="btn btn-primary mt-3">Continue</button></form>
+<form method="post"><button class="btn btn-primary">Continue</button></form>
 {% endblock %}
 
 {% block scripts %}
-  {{ super }}
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const opts = { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} };
-    function J(id){ try{ return JSON.parse(document.getElementById(id).textContent||'[]'); }catch(e){ return []; } }
-    // (1)
-    const s1 = J('data_c1');
-    if (Array.isArray(s1) && s1.length){
-      new Chart(document.getElementById('c1'),{ type:'line',
-        data:{datasets:[{data:s1, parsing:false, pointRadius:2, tension:0}]},
-        options:{...opts, scales:{x:{type:'linear', title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Avg Bid'}}}}
-      });
-    } else { document.getElementById('box1').insertAdjacentHTML('beforeend','<div class="text-muted small">No data</div>'); }
-    // (2) individual
-    const indiv = J('data_indiv');
-    const container = document.getElementById('indiv');
-    if (Array.isArray(indiv) && indiv.length){
-      indiv.forEach(series=>{
-        const block=document.createElement('div'); block.className='chart-wrap h-sm'; block.style.marginTop='8px';
-        const title=document.createElement('div'); title.innerHTML='<strong>Participant '+series.pid+'</strong>'; container.appendChild(title);
-        const canvas=document.createElement('canvas'); block.appendChild(canvas); container.appendChild(block);
-        new Chart(canvas,{type:'line', data:{datasets:[{data:series.points, parsing:false, pointRadius:2, tension:0}]},
-          options:{...opts, scales:{x:{type:'linear', title:{display:true,text:'Valuation'}}, y:{title:{display:true,text:'Avg Bid'}}}}});
-      });
-    } else { container.insertAdjacentHTML('beforeend','<div class="text-muted small">No data</div>'); }
-    // (3)
-    const s3 = J('data_c3');
-    if (Array.isArray(s3) && s3.length){
-      new Chart(document.getElementById('c3'),{ type:'line',
-        data:{datasets:[{data:s3, parsing:false, pointRadius:2, tension:0}]},
-        options:{...opts, scales:{x:{type:'linear', title:{display:true,text:'Round'}}, y:{title:{display:true,text:'Revenue'}}}}
-      });
-    } else { document.getElementById('box3').insertAdjacentHTML('beforeend','<div class="text-muted small">No data</div>'); }
-  </script>
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const s1 = {{ avg_bid_by_val | safe }};
+  const indiv = {{ indiv_series | safe }};
+  const s3 = {{ rev_by_round | safe }};
+
+  function renderLine(ctx, data, label){
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.map(d=>d.x),
+        datasets: [{ label: label, data: data.map(d=>d.y), fill:false, tension:0.1 }]
+      },
+      options: { maintainAspectRatio: false, responsive: true }
+    });
+  }
+
+  const c1 = document.createElement('canvas');
+  c1.style.width = '700px'; c1.style.height = '300px';
+  document.getElementById('chart1').appendChild(c1);
+  renderLine(c1, s1, 'Avg bid');
+
+  const c3 = document.createElement('canvas');
+  c3.style.width = '700px'; c3.style.height = '300px';
+  document.getElementById('chart3').appendChild(c3);
+  renderLine(c3, s3, 'Avg revenue');
+
+  const c2 = document.createElement('canvas');
+  c2.style.width = '700px'; c2.style.height = '300px';
+  document.getElementById('chart2').appendChild(c2);
+  if (indiv.length>0){
+    const first = indiv[0].points || [];
+    renderLine(c2, first, 'Sample student');
+  }
+</script>
 {% endblock %}
