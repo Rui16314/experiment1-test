@@ -34,7 +34,7 @@
     log.scrollTop = log.scrollHeight;
   }
 
-  // Make the receiver function global so oTree's websocket code can call it
+  // global receive function for oTree
   window.liveRecv = function(payload){
     console.log('liveRecv payload', payload);
     if (!payload) return;
@@ -45,20 +45,17 @@
     }
   };
 
-  // Send (do NOT add local line here; wait for server broadcast to avoid duplication)
+  // Send
   btn.addEventListener('click', () => {
     const t = (inp.value || '').trim();
     if (!t) return;
-
     console.log('Attempting to send:', t, 'liveSend type:', typeof liveSend, 'jsVars:', jsVars);
     if (typeof liveSend === 'function') {
       liveSend({ text: t });
     } else {
-      // helpful visual error if liveSend is missing
       addLine('-', '⚠️ liveSend undefined — page is not LIVE. Check live_method and that you extend global/Page.html', false);
       console.warn('liveSend is undefined; page not LIVE or parent template missing.');
     }
-
     inp.value = '';
     inp.focus();
   });
@@ -66,11 +63,6 @@
   inp.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); btn.click(); }
   });
-
-  // debug helpers to run in console:
-  // typeof liveSend
-  // jsVars
-  // check WS frames in Network -> WS
 </script>
 {% endblock %}
 
