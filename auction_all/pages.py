@@ -1,9 +1,8 @@
-# pages.py
 from otree.api import *
 from .models import C, Subsession, Group, Player, PHASES, PHASE_SIZE, TOTAL_ROUNDS
 import json
 
-# ---------- Instructions (kept exactly as you provided) ----------
+# ---------- Instructions (exact, do not change) ----------
 GENERAL_INSTR = """
 <h3 style="text-align:center;">GENERAL INSTRUCTIONS</h3>
 <p>Welcome to the ECON 3310 Experiment Platform.</p>
@@ -79,20 +78,23 @@ SESSION_TEXT = {
     "sp_comm":   "<h4>SESSION 6</h4><p>(Paste the exact text from your document here.)</p>",
 }
 
-# ---------- helpers ----------
 def _cfloat(x):
     try:
         return float(x)
     except TypeError:
         return 0.0
 
+def _safe_float(x):
+    try:
+        return float(x) if x is not None else ''
+    except Exception:
+        return ''
+
 def current_phase(subsession):
     return PHASES[subsession.phase_index]
 
-# ---------- pages ----------
 class PhaseIntro(Page):
     def is_displayed(self):
-        # show at rounds 1,11,21,31,41,51
         return (self.player.round_number - 1) % PHASE_SIZE == 0
 
     def vars_for_template(self):
@@ -105,52 +107,31 @@ class PhaseIntro(Page):
         )
 
 class Chat(Page):
-    # calls Player.live_chat in models.py
     live_method = 'live_chat'
-
     def is_displayed(self):
-        # only in Exp3 & Exp6 (your Subsession sets this flag)
         return self.subsession.chat_enabled
-
     def vars_for_template(self):
-        v = self.player.valuation
-        try:
-            val_num = int(v) if v is not None else ''
-        except Exception:
-            val_num = float(v) if v is not None else ''
-        return dict(val_num=val_num)
-
+        return dict(val_num=_safe_float(self.player.valuation))
     def js_vars(self):
         return dict(me=self.player.id_in_group)
 
 class BidPage(Page):
     form_model = "player"
     form_fields = ["bid"]
-    timeout_seconds = 60  # shows timer & auto-advance
+    timeout_seconds = 60
 
     def vars_for_template(self):
-        v = self.player.valuation
-        try:
-            val_num = int(v) if v is not None else ''
-        except Exception:
-            val_num = float(v) if v is not None else ''
-        return dict(val_num=val_num)
+        return dict(val_num=_safe_float(self.player.valuation))
 
-    # <-- Make this an instance method (not @staticmethod) that accepts 'values'
     def error_message(self, values):
-        """
-        oTree will call this as self.error_message(values). So signature must be (self, values).
-        Use self.player if you need the player.
-        """
-        player = self.player
         b = values.get('bid')
         if b is None:
             return 'Please enter a bid (0–100).'
-        # b will be a Currency (Decimal/cu) — compare to cu(0)/cu(100)
         if b < cu(0) or b > cu(100):
             return 'Bid must be between 0 and 100.'
-        # optionally check more rules, e.g. integer cents only etc.
 
+    def before_next_page(self, timeout_happened):
+        self.player.timed_out = bool(timeout_happened)
 
 class Compute(WaitPage):
     after_all_players_arrive = 'set_winner_and_payoffs'
@@ -158,13 +139,11 @@ class Compute(WaitPage):
 class Results(Page):
     def vars_for_template(self):
         other = self.player.get_others_in_group()[0]
-
         def _c(x):
             try:
                 return float(x)
             except TypeError:
                 return 0.0
-
         return dict(
             my_v=_c(self.player.valuation),
             my_b=_c(getattr(self.player, "bid", None)),
@@ -195,16 +174,18 @@ class SessionSummary(Page):
                         payoff=_cfloat(getattr(p, "payoff", None)),
                     ))
 
-        # 1) Avg bid vs valuation (all players)
         bins = {}
         for rr in rows:
+            if rr["valuation"] is None:
+                continue
             k = int(rr["valuation"])
             bins.setdefault(k, []).append(rr["bid"])
         s1 = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(bins.items()) if v]
 
-        # 2) Individual avg bid vs valuation (per participant)
         indiv = {}
         for rr in rows:
+            if rr["valuation"] is None:
+                continue
             pid = rr["pid"]; k = int(rr["valuation"])
             indiv.setdefault(pid, {}).setdefault(k, []).append(rr["bid"])
         indiv_series = []
@@ -212,14 +193,12 @@ class SessionSummary(Page):
             pts = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(mp.items())]
             indiv_series.append(dict(pid=pid, points=pts))
 
-        # 3) Average revenue (winning price) by round (phase-local)
         rev = {}
         for rr in rows:
             k = rr["round"] - (start - 1)
             rev.setdefault(k, []).append(rr["price"])
         s3 = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(rev.items()) if v]
 
-        # 4) Your overall average revenue (this session)
         my_pid = self.player.participant.code
         my_payoffs = [rr["payoff"] for rr in rows if rr["pid"] == my_pid]
         my_avg_payoff_str = f"{(sum(my_payoffs) / len(my_payoffs) if my_payoffs else 0):.2f}"
@@ -266,6 +245,8 @@ class AllDashboard(Page):
 
             bins = {}
             for rr in rows:
+                if rr["valuation"] is None:
+                    continue
                 k = int(rr["valuation"])
                 bins.setdefault(k, []).append(rr["bid"])
             s1 = [{"x": k, "y": sum(v) / len(v)} for k, v in sorted(bins.items()) if v]
@@ -297,7 +278,6 @@ class AllDashboard(Page):
             labels=[ph["label"] for ph in PHASES],
         )
 
-# ---------- sequence ----------
 page_sequence = [
     PhaseIntro,
     Chat,
@@ -307,4 +287,5 @@ page_sequence = [
     SessionSummary,
     AllDashboard,
 ]
+
 
