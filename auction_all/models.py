@@ -1,4 +1,3 @@
-
 from otree.api import *
 import random
 from decimal import Decimal
@@ -69,11 +68,14 @@ class Group(BaseGroup):
             price = b1 if self.subsession.auction_format == "first" else b2
 
         def raw_bid(pl):
-            try: return pl.bid
-            except TypeError: return None
+            try:
+                return pl.bid
+            except (TypeError, AttributeError):
+                return None
 
         auto_highest = False
-        if (((raw_bid(p1) is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or            (((raw_bid(p2) is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
+        if (((raw_bid(p1) is None) or p1.timed_out) and b1 >= b2 and b1 > 0) or \
+           (((raw_bid(p2) is None) or p2.timed_out) and b2 >= b1 and b2 > 0):
             auto_highest = True
 
         if auto_highest:
@@ -86,10 +88,9 @@ class Group(BaseGroup):
         winner.won, loser.won = True, False
         winner.winning_price = price
         loser.winning_price = price
-        winner.payoff = (winner.valuation - price)
+        winner.payoff = winner.valuation - price
         loser.payoff = cu(0)
 
-# models.py  (append inside class Player)
 class Player(BasePlayer):
     valuation = models.CurrencyField()
     bid = models.CurrencyField(min=0, max=100, blank=True)
@@ -100,17 +101,23 @@ class Player(BasePlayer):
     def get_effective_bid(self):
         try:
             b = self.bid
-        except TypeError:
+        except (TypeError, AttributeError):
             b = None
         if b is not None:
             return b
         v = self.valuation or cu(0)
-        return v/2 if self.subsession.auction_format == "first" else v
+        if self.subsession.auction_format == "first":
+            return v/2
+        else:
+            return v
 
-    # ✅ LIVE handler must be on Player/Group/Subsession (not Page)
+    # Live handler for chat — must be on Player (or Group). oTree routes liveSend -> Player.live_chat
     def live_chat(self, data):
+        # debug print appears in server logs (helpful)
+        print("live_chat called for player", self.id_in_group, "data:", data)
         text = (data or {}).get('text', '').strip()
         if not text:
             return
-        # broadcast one message to everyone on the page
+        # return payload broadcast to everyone on the same live page
         return {0: dict(sender=self.id_in_group, text=text)}
+
